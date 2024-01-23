@@ -19,6 +19,7 @@ type Starbox struct {
 	*starlet.Machine
 	mu        sync.RWMutex
 	hasRun    bool
+	globals   starlet.StringAnyMap
 	builtMods []string
 	loadMods  map[string]starlet.ModuleLoader
 }
@@ -51,7 +52,10 @@ func (s *Starbox) AddKeyValue(key string, value interface{}) {
 	if s.hasRun {
 		log.DPanic("cannot add key-value pair after running")
 	}
-	s.Machine.AddGlobals(starlet.StringAnyMap{key: value})
+	if s.globals == nil {
+		s.globals = make(starlet.StringAnyMap)
+	}
+	s.globals[key] = value
 }
 
 // AddKeyValues adds key-value pairs to the global environment before running.
@@ -64,7 +68,10 @@ func (s *Starbox) AddKeyValues(keyValues starlet.StringAnyMap) {
 	if s.hasRun {
 		log.DPanic("cannot add key-value pairs after running")
 	}
-	s.Machine.AddGlobals(keyValues)
+	if s.globals == nil {
+		s.globals = make(starlet.StringAnyMap)
+	}
+	s.globals.Merge(keyValues)
 }
 
 // AddBuiltin adds a builtin function with name to the global environment before running.
