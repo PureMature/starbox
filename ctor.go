@@ -85,7 +85,7 @@ func (s *Starbox) AddBuiltin(name string, starFunc StarlarkFunc) {
 		log.DPanic("cannot add builtin after running")
 	}
 	sb := starlark.NewBuiltin(name, starFunc)
-	s.Machine.AddGlobals(starlet.StringAnyMap{name: sb})
+	s.AddKeyValue(name, sb)
 }
 
 // AddNamedModules adds builtin modules by name to the preload and lazyload registry.
