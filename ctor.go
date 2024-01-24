@@ -17,11 +17,12 @@ type StarlarkFunc func(thread *starlark.Thread, fn *starlark.Builtin, args starl
 // Starbox is a wrapper of starlet.Machine with additional features.
 type Starbox struct {
 	*starlet.Machine
-	mu        sync.RWMutex
-	hasRun    bool
-	globals   starlet.StringAnyMap
-	builtMods []string
-	loadMods  map[string]starlet.ModuleLoader
+	mu         sync.RWMutex
+	hasRun     bool
+	globals    starlet.StringAnyMap
+	builtMods  []string
+	loadMods   map[string]starlet.ModuleLoader
+	scriptMods map[string]string
 }
 
 // NewStarbox creates a new Starbox instance with default settings.
@@ -123,6 +124,17 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 			moduleName: &sm,
 		}, nil
 	}
+}
+
+// AddModuleScript creates a module with given module script in memory filesystem, and adds it to the preload and lazyload registry.
+func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.scriptMods == nil {
+		s.scriptMods = make(map[string]string)
+	}
+	s.scriptMods[moduleName] = moduleScript
 }
 
 /*

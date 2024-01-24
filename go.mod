@@ -6,6 +6,7 @@ require (
 	bitbucket.org/ai69/amoy v0.2.3
 	bitbucket.org/neiku/hlog v0.1.2
 	github.com/1set/starlet v0.0.6
+	github.com/psanford/memfs v0.0.0-20230130182539-4dbf7e3e865e
 	go.starlark.net v0.0.0-20231121155337-90ade8b19d09
 	go.uber.org/zap v1.24.0
 )

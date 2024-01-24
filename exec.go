@@ -1,13 +1,18 @@
 package starbox
 
-import "github.com/1set/starlet"
+import (
+	"io/fs"
+
+	"github.com/1set/starlet"
+	"github.com/psanford/memfs"
+)
 
 var (
 	// defaultSafeModules is the list of safe modules.
 	defaultSafeModules = []string{"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time"}
 )
 
-func (s *Starbox) PrepareEnvironment() (err error) {
+func (s *Starbox) PrepareEnvironment(script string) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -54,6 +59,22 @@ func (s *Starbox) PrepareEnvironment() (err error) {
 	if len(lazyMods) > 0 {
 		s.Machine.SetLazyloadModules(lazyMods)
 	}
+
+	// prepare script modules
+	var modFS fs.FS
+	if len(s.scriptMods) > 0 {
+		rootFS := memfs.New()
+		for name, script := range s.scriptMods {
+			// TODO: support directory later
+			if err := rootFS.WriteFile(name, []byte(script), 0644); err != nil {
+				return err
+			}
+		}
+		modFS = rootFS
+	}
+
+	// set script
+	s.Machine.SetScript("box.star", []byte(script), modFS)
 
 	// all is done
 	return nil
