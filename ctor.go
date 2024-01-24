@@ -126,7 +126,7 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 	}
 }
 
-// AddModuleScript creates a module with given module script in memory filesystem, and adds it to the preload and lazyload registry.
+// AddModuleScript creates a module with given module script in virtual filesystem, and adds it to the preload and lazyload registry.
 func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -136,22 +136,3 @@ func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	}
 	s.scriptMods[moduleName] = moduleScript
 }
-
-/*
-pre, err := starlet.MakeBuiltinModuleLoaderList(moduleNames...)
-if err != nil {
-	panic(err)
-}
-lazy, err := starlet.MakeBuiltinModuleLoaderMap(moduleNames...)
-if err != nil {
-	panic(err)
-}
-s.Machine.SetPreloadModules(pre)
-s.Machine.SetLazyloadModules(lazy)
-
-SetPreloadModules ... by system names
-SetLazyloadModules ... by system names ... exists?
-
-SetCustomPreloadModules for real modules
-SetCustomLazyloadModules for real modules
-*/

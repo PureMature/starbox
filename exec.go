@@ -52,11 +52,9 @@ func (s *Starbox) PrepareEnvironment(script string) (err error) {
 		}
 	}
 
-	// load it
-	if len(preMods) > 0 {
+	// set modules to machine
+	if len(preMods) > 0 || len(lazyMods) > 0 {
 		s.Machine.SetPreloadModules(preMods)
-	}
-	if len(lazyMods) > 0 {
 		s.Machine.SetLazyloadModules(lazyMods)
 	}
 
@@ -65,7 +63,7 @@ func (s *Starbox) PrepareEnvironment(script string) (err error) {
 	if len(s.scriptMods) > 0 {
 		rootFS := memfs.New()
 		for name, script := range s.scriptMods {
-			// TODO: support directory later
+			// TODO: support directory/file.star later
 			if err := rootFS.WriteFile(name, []byte(script), 0644); err != nil {
 				return err
 			}
