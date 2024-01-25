@@ -141,7 +141,7 @@ func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazy
 		}
 	}
 
-	// custom module loaders
+	// merge custom module loaders
 	if len(modLoads) > 0 {
 		if preMods == nil {
 			preMods = make(starlet.ModuleLoaderList, 0, len(modLoads))
