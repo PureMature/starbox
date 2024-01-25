@@ -105,7 +105,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 }
 
 func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazyMods starlet.ModuleLoaderMap, err error) {
-	// get modules by name: module set + individual names
+	// get modules by name: local module set + individual names for starlet
 	var modNames []string
 	if modNames, err = getModuleSet(s.modSet); err != nil {
 		return nil, nil, err
@@ -113,7 +113,25 @@ func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazy
 	modNames = append(modNames, s.builtMods...)
 	modNames = uniqueStrings(modNames)
 
-	// convert builtin module names to module loaders
+	// separate local module loaders from starlet module names
+	var (
+		letModNames []string
+		modLoads    starlet.ModuleLoaderMap
+	)
+	for _, name := range modNames {
+		if load, ok := localModuleLoaders[name]; ok {
+			if modLoads == nil {
+				modLoads = make(starlet.ModuleLoaderMap, len(modNames))
+			}
+			modLoads[name] = load
+		} else {
+			letModNames = append(letModNames, name)
+		}
+	}
+	modNames = letModNames
+	modLoads.Merge(s.loadMods)
+
+	// convert starlet builtin module names to module loaders
 	if len(modNames) > 0 {
 		if preMods, err = starlet.MakeBuiltinModuleLoaderList(modNames...); err != nil {
 			return nil, nil, err
@@ -124,14 +142,14 @@ func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazy
 	}
 
 	// custom module loaders
-	if len(s.loadMods) > 0 {
+	if len(modLoads) > 0 {
 		if preMods == nil {
-			preMods = make(starlet.ModuleLoaderList, 0, len(s.loadMods))
+			preMods = make(starlet.ModuleLoaderList, 0, len(modLoads))
 		}
 		if lazyMods == nil {
-			lazyMods = make(starlet.ModuleLoaderMap, len(s.loadMods))
+			lazyMods = make(starlet.ModuleLoaderMap, len(modLoads))
 		}
-		for name, loader := range s.loadMods {
+		for name, loader := range modLoads {
 			preMods = append(preMods, loader)
 			lazyMods[name] = loader
 		}

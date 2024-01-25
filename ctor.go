@@ -23,7 +23,7 @@ type Starbox struct {
 	globals    starlet.StringAnyMap
 	modSet     ModuleSetName
 	builtMods  []string
-	loadMods   map[string]starlet.ModuleLoader
+	loadMods   starlet.ModuleLoaderMap
 	scriptMods map[string]string
 }
 

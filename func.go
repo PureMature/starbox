@@ -1,6 +1,11 @@
 package starbox
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/1set/starlet"
+	grt "github.com/PureMature/starbox/module/runtime"
+)
 
 // ModuleSetName defines the name of a module set.
 type ModuleSetName string
@@ -17,16 +22,19 @@ const (
 )
 
 var (
-	moduleSetMap = map[ModuleSetName][]string{
+	moduleSets = map[ModuleSetName][]string{
 		EmptyModuleSet:   {},
 		SafeModuleSet:    {"base64", "go_idiomatic", "hashlib", "json", "math", "random", "re", "struct", "time"},
 		NetworkModuleSet: {"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time"},
-		FullModuleSet:    {"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time"},
+		FullModuleSet:    {"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time", grt.ModuleName},
+	}
+	localModuleLoaders = starlet.ModuleLoaderMap{
+		grt.ModuleName: grt.LoadModule,
 	}
 )
 
 func getModuleSet(modSet ModuleSetName) ([]string, error) {
-	if mods, ok := moduleSetMap[modSet]; ok {
+	if mods, ok := moduleSets[modSet]; ok {
 		return mods, nil
 	}
 	if modSet == "" {
