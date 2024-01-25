@@ -33,6 +33,7 @@ var (
 	}
 )
 
+// getModuleSet returns the module names for the given module set name.
 func getModuleSet(modSet ModuleSetName) ([]string, error) {
 	if mods, ok := moduleSets[modSet]; ok {
 		return mods, nil
