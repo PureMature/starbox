@@ -15,8 +15,10 @@ func (s *Starbox) Run(script string) (starlet.StringAnyMap, error) {
 	defer s.mu.Unlock()
 
 	// prepare environment
-	if err := s.prepareEnv(script); err != nil {
-		return nil, err
+	if !s.hasRun {
+		if err := s.prepareEnv(script); err != nil {
+			return nil, err
+		}
 	}
 
 	// run
@@ -31,8 +33,10 @@ func (s *Starbox) RunTimeout(script string, timeout time.Duration) (starlet.Stri
 	defer s.mu.Unlock()
 
 	// prepare environment
-	if err := s.prepareEnv(script); err != nil {
-		return nil, err
+	if !s.hasRun {
+		if err := s.prepareEnv(script); err != nil {
+			return nil, err
+		}
 	}
 
 	// run
@@ -47,8 +51,10 @@ func (s *Starbox) REPL() error {
 	defer s.mu.Unlock()
 
 	// prepare environment
-	if err := s.prepareEnv(""); err != nil {
-		return err
+	if !s.hasRun {
+		if err := s.prepareEnv(""); err != nil {
+			return err
+		}
 	}
 
 	// run
@@ -71,6 +77,14 @@ func (s *Starbox) Reset() {
 func (s *Starbox) prepareEnv(script string) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// set custom tag and print function
+	if s.tagName != "" {
+		s.mac.SetCustomTag(s.tagName)
+	}
+	if s.printFunc != nil {
+		s.mac.SetPrintFunc(s.printFunc)
+	}
 
 	// set variables
 	s.mac.SetGlobals(s.globals)
