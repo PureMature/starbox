@@ -2,15 +2,11 @@ package starbox
 
 import (
 	"io/fs"
+	"sort"
 	"time"
 
 	"github.com/1set/starlet"
 	"github.com/psanford/memfs"
-)
-
-var (
-	// defaultSafeModuleNames is the list of safe module names.
-	defaultSafeModuleNames = []string{"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time"}
 )
 
 // Run executes a script and returns the converted output.
@@ -109,14 +105,20 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 }
 
 func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazyMods starlet.ModuleLoaderMap, err error) {
-	// TODO: add preset builtin and distinct --- e.g. full, network, etc
+	// get modules by name: module set + individual names
+	var modNames []string
+	if modNames, err = getModuleSet(s.modSet); err != nil {
+		return nil, nil, err
+	}
+	modNames = append(modNames, s.builtMods...)
+	modNames = uniqueStrings(modNames)
 
-	// preset module names
-	if len(s.builtMods) > 0 {
-		if preMods, err = starlet.MakeBuiltinModuleLoaderList(s.builtMods...); err != nil {
+	// convert builtin module names to module loaders
+	if len(modNames) > 0 {
+		if preMods, err = starlet.MakeBuiltinModuleLoaderList(modNames...); err != nil {
 			return nil, nil, err
 		}
-		if lazyMods, err = starlet.MakeBuiltinModuleLoaderMap(s.builtMods...); err != nil {
+		if lazyMods, err = starlet.MakeBuiltinModuleLoaderMap(modNames...); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -137,4 +139,20 @@ func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazy
 
 	// result
 	return preMods, lazyMods, nil
+}
+
+func uniqueStrings(ss []string) []string {
+	if len(ss) < 2 {
+		return ss
+	}
+	m := make(map[string]struct{}, len(ss))
+	for _, s := range ss {
+		m[s] = struct{}{}
+	}
+	unique := make([]string, 0, len(m))
+	for s := range m {
+		unique = append(unique, s)
+	}
+	sort.Strings(unique)
+	return unique
 }
