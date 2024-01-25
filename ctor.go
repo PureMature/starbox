@@ -19,6 +19,7 @@ type Starbox struct {
 	*starlet.Machine
 	mu         sync.RWMutex
 	hasRun     bool
+	name       string
 	globals    starlet.StringAnyMap
 	builtMods  []string
 	loadMods   map[string]starlet.ModuleLoader
@@ -27,6 +28,11 @@ type Starbox struct {
 
 // NewStarbox creates a new Starbox instance with default settings.
 func NewStarbox(name string) *Starbox {
+	m := newStarMachine(name)
+	return &Starbox{Machine: m, name: name}
+}
+
+func newStarMachine(name string) *starlet.Machine {
 	m := starlet.NewDefault()
 	m.EnableGlobalReassign()
 	// m.SetInputConversionEnabled(false)
@@ -35,7 +41,7 @@ func NewStarbox(name string) *Starbox {
 		prefix := fmt.Sprintf("[⭐|%s](%s)", name, time.Now().UTC().Format(`15:04:05.000`))
 		amoy.Eprintln(prefix, msg)
 	})
-	return &Starbox{Machine: m}
+	return m
 }
 
 // SetTag sets the custom tag of Go struct fields for Starlark.

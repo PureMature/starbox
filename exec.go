@@ -24,6 +24,7 @@ func (s *Starbox) Run(script string) (starlet.StringAnyMap, error) {
 	}
 
 	// run
+	s.hasRun = true
 	return s.Machine.Run()
 }
 
@@ -38,6 +39,7 @@ func (s *Starbox) RunTimeout(script string, timeout time.Duration) (starlet.Stri
 	}
 
 	// run
+	s.hasRun = true
 	return s.Machine.RunWithTimeout(timeout, nil)
 }
 
@@ -52,8 +54,19 @@ func (s *Starbox) REPL() error {
 	}
 
 	// run
+	s.hasRun = true
 	s.Machine.REPL()
 	return nil
+}
+
+// Reset creates an new Starlet machine and keeps the settings.
+func (s *Starbox) Reset() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	//s.Machine.Reset()
+	s.Machine = newStarMachine(s.name)
+	s.hasRun = false
 }
 
 func (s *Starbox) prepareEnv(script string) (err error) {
