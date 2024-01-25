@@ -16,9 +16,10 @@ type StarlarkFunc func(thread *starlark.Thread, fn *starlark.Builtin, args starl
 
 // Starbox is a wrapper of starlet.Machine with additional features.
 type Starbox struct {
-	*starlet.Machine
+	mac        *starlet.Machine
 	mu         sync.RWMutex
 	hasRun     bool
+	runTimes   uint
 	name       string
 	globals    starlet.StringAnyMap
 	modSet     ModuleSetName
@@ -27,9 +28,9 @@ type Starbox struct {
 	scriptMods map[string]string
 }
 
-// NewStarbox creates a new Starbox instance with default settings.
-func NewStarbox(name string) *Starbox {
-	return &Starbox{Machine: newStarMachine(name), name: name}
+// New creates a new Starbox instance with default settings.
+func New(name string) *Starbox {
+	return &Starbox{mac: newStarMachine(name), name: name}
 }
 
 func newStarMachine(name string) *starlet.Machine {
@@ -44,9 +45,19 @@ func newStarMachine(name string) *starlet.Machine {
 	return m
 }
 
+// String returns the name of the Starbox instance.
+func (s *Starbox) String() string {
+	return fmt.Sprintf("🥡Box{name:%s,run:%d}", s.name, s.runTimes)
+}
+
+// GetMachine returns the underlying starlet.Machine instance.
+func (s *Starbox) GetMachine() *starlet.Machine {
+	return s.mac
+}
+
 // SetTag sets the custom tag of Go struct fields for Starlark.
 func (s *Starbox) SetTag(tag string) {
-	s.Machine.SetCustomTag(tag)
+	s.mac.SetCustomTag(tag)
 }
 
 // SetModuleSet sets the module set to be loaded before running.

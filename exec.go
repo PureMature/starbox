@@ -21,7 +21,8 @@ func (s *Starbox) Run(script string) (starlet.StringAnyMap, error) {
 
 	// run
 	s.hasRun = true
-	return s.Machine.Run()
+	s.runTimes++
+	return s.mac.Run()
 }
 
 // RunTimeout executes a script and returns the converted output.
@@ -36,7 +37,8 @@ func (s *Starbox) RunTimeout(script string, timeout time.Duration) (starlet.Stri
 
 	// run
 	s.hasRun = true
-	return s.Machine.RunWithTimeout(timeout, nil)
+	s.runTimes++
+	return s.mac.RunWithTimeout(timeout, nil)
 }
 
 // REPL starts a REPL session.
@@ -51,7 +53,8 @@ func (s *Starbox) REPL() error {
 
 	// run
 	s.hasRun = true
-	s.Machine.REPL()
+	s.runTimes++
+	s.mac.REPL()
 	return nil
 }
 
@@ -60,8 +63,8 @@ func (s *Starbox) Reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	//s.Machine.Reset()
-	s.Machine = newStarMachine(s.name)
+	//s.mac.Reset()
+	s.mac = newStarMachine(s.name)
 	s.hasRun = false
 }
 
@@ -70,7 +73,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 	defer s.mu.Unlock()
 
 	// set variables
-	s.Machine.SetGlobals(s.globals)
+	s.mac.SetGlobals(s.globals)
 
 	// extract module loaders
 	preMods, lazyMods, err := s.extractModuleLoaders()
@@ -80,8 +83,8 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 
 	// set modules to machine
 	if len(preMods) > 0 || len(lazyMods) > 0 {
-		s.Machine.SetPreloadModules(preMods)
-		s.Machine.SetLazyloadModules(lazyMods)
+		s.mac.SetPreloadModules(preMods)
+		s.mac.SetLazyloadModules(lazyMods)
 	}
 
 	// prepare script modules
@@ -98,7 +101,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 	}
 
 	// set script
-	s.Machine.SetScript("box.star", []byte(script), modFS)
+	s.mac.SetScript("box.star", []byte(script), modFS)
 
 	// all is done
 	return nil
