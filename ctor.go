@@ -28,8 +28,7 @@ type Starbox struct {
 
 // NewStarbox creates a new Starbox instance with default settings.
 func NewStarbox(name string) *Starbox {
-	m := newStarMachine(name)
-	return &Starbox{Machine: m, name: name}
+	return &Starbox{Machine: newStarMachine(name), name: name}
 }
 
 func newStarMachine(name string) *starlet.Machine {
