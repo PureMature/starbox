@@ -1,3 +1,4 @@
+// Package runtime implements the Starlark module for runtime information.
 package runtime
 
 import (
