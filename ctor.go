@@ -21,8 +21,9 @@ type Starbox struct {
 	hasRun     bool
 	name       string
 	globals    starlet.StringAnyMap
+	modSet     ModuleSetName
 	builtMods  []string
-	loadMods   map[string]starlet.ModuleLoader
+	loadMods   starlet.ModuleLoaderMap
 	scriptMods map[string]string
 }
 
@@ -46,6 +47,14 @@ func newStarMachine(name string) *starlet.Machine {
 // SetTag sets the custom tag of Go struct fields for Starlark.
 func (s *Starbox) SetTag(tag string) {
 	s.Machine.SetCustomTag(tag)
+}
+
+// SetModuleSet sets the module set to be loaded before running.
+func (s *Starbox) SetModuleSet(modSet ModuleSetName) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.modSet = modSet
 }
 
 // AddKeyValue adds a key-value pair to the global environment before running.
