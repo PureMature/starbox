@@ -60,11 +60,20 @@ func (s *Starbox) SetTag(tag string) {
 	s.mac.SetCustomTag(tag)
 }
 
+// SetPrintFunc sets the print function for Starlark.
+func (s *Starbox) SetPrintFunc(printFunc starlet.PrintFunc) {
+	s.mac.SetPrintFunc(printFunc)
+}
+
 // SetModuleSet sets the module set to be loaded before running.
+// It panics if called after running.
 func (s *Starbox) SetModuleSet(modSet ModuleSetName) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot set module set after running")
+	}
 	s.modSet = modSet
 }
 
@@ -116,19 +125,27 @@ func (s *Starbox) AddBuiltin(name string, starFunc StarlarkFunc) {
 
 // AddNamedModules adds builtin modules by name to the preload and lazyload registry.
 // It will not load the modules until the first run.
+// It panics if called after running.
 func (s *Starbox) AddNamedModules(moduleNames ...string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot add named modules after running")
+	}
 	s.builtMods = append(s.builtMods, moduleNames...)
 }
 
 // AddModuleLoader adds a custom module loader to the preload and lazyload registry.
 // It will not load the module until the first run.
+// It panics if called after running.
 func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.ModuleLoader) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot add module loader after running")
+	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
 	}
@@ -136,10 +153,14 @@ func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.Module
 }
 
 // AddModuleData creates a module for the given module data along with a module loader, and adds it to the preload and lazyload registry.
+// It panics if called after running.
 func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot add module data after running")
+	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
 	}
@@ -152,10 +173,14 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 }
 
 // AddModuleScript creates a module with given module script in virtual filesystem, and adds it to the preload and lazyload registry.
+// It panics if called after running.
 func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot add module script after running")
+	}
 	if s.scriptMods == nil {
 		s.scriptMods = make(map[string]string)
 	}
