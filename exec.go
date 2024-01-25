@@ -76,8 +76,8 @@ func (s *Starbox) Reset() {
 
 func (s *Starbox) prepareEnv(script string) (err error) {
 	// set custom tag and print function
-	if s.tagName != "" {
-		s.mac.SetCustomTag(s.tagName)
+	if s.structTag != "" {
+		s.mac.SetCustomTag(s.structTag)
 	}
 	if s.printFunc != nil {
 		s.mac.SetPrintFunc(s.printFunc)

@@ -21,7 +21,7 @@ type Starbox struct {
 	hasRun     bool
 	runTimes   uint
 	name       string
-	tagName    string
+	structTag  string
 	printFunc  starlet.PrintFunc
 	globals    starlet.StringAnyMap
 	modSet     ModuleSetName
@@ -57,16 +57,16 @@ func (s *Starbox) GetMachine() *starlet.Machine {
 	return s.mac
 }
 
-// SetTag sets the custom tag of Go struct fields for Starlark.
+// SetStructTag sets the custom tag of Go struct fields for Starlark.
 // It panics if called after running.
-func (s *Starbox) SetTag(tag string) {
+func (s *Starbox) SetStructTag(tag string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
 		log.DPanic("cannot set tag after running")
 	}
-	s.tagName = tag
+	s.structTag = tag
 }
 
 // SetPrintFunc sets the print function for Starlark.
