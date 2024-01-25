@@ -16,10 +16,13 @@ type StarlarkFunc func(thread *starlark.Thread, fn *starlark.Builtin, args starl
 
 // Starbox is a wrapper of starlet.Machine with additional features.
 type Starbox struct {
-	*starlet.Machine
+	mac        *starlet.Machine
 	mu         sync.RWMutex
 	hasRun     bool
+	runTimes   uint
 	name       string
+	structTag  string
+	printFunc  starlet.PrintFunc
 	globals    starlet.StringAnyMap
 	modSet     ModuleSetName
 	builtMods  []string
@@ -27,9 +30,9 @@ type Starbox struct {
 	scriptMods map[string]string
 }
 
-// NewStarbox creates a new Starbox instance with default settings.
-func NewStarbox(name string) *Starbox {
-	return &Starbox{Machine: newStarMachine(name), name: name}
+// New creates a new Starbox instance with default settings.
+func New(name string) *Starbox {
+	return &Starbox{mac: newStarMachine(name), name: name}
 }
 
 func newStarMachine(name string) *starlet.Machine {
@@ -44,16 +47,49 @@ func newStarMachine(name string) *starlet.Machine {
 	return m
 }
 
-// SetTag sets the custom tag of Go struct fields for Starlark.
-func (s *Starbox) SetTag(tag string) {
-	s.Machine.SetCustomTag(tag)
+// String returns the name of the Starbox instance.
+func (s *Starbox) String() string {
+	return fmt.Sprintf("🥡Box{name:%s,run:%d}", s.name, s.runTimes)
+}
+
+// GetMachine returns the underlying starlet.Machine instance.
+func (s *Starbox) GetMachine() *starlet.Machine {
+	return s.mac
+}
+
+// SetStructTag sets the custom tag of Go struct fields for Starlark.
+// It panics if called after running.
+func (s *Starbox) SetStructTag(tag string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot set tag after running")
+	}
+	s.structTag = tag
+}
+
+// SetPrintFunc sets the print function for Starlark.
+// It panics if called after running.
+func (s *Starbox) SetPrintFunc(printFunc starlet.PrintFunc) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot set print function after running")
+	}
+	s.printFunc = printFunc
 }
 
 // SetModuleSet sets the module set to be loaded before running.
+// It panics if called after running.
 func (s *Starbox) SetModuleSet(modSet ModuleSetName) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot set module set after running")
+	}
 	s.modSet = modSet
 }
 
@@ -105,19 +141,27 @@ func (s *Starbox) AddBuiltin(name string, starFunc StarlarkFunc) {
 
 // AddNamedModules adds builtin modules by name to the preload and lazyload registry.
 // It will not load the modules until the first run.
+// It panics if called after running.
 func (s *Starbox) AddNamedModules(moduleNames ...string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot add named modules after running")
+	}
 	s.builtMods = append(s.builtMods, moduleNames...)
 }
 
 // AddModuleLoader adds a custom module loader to the preload and lazyload registry.
 // It will not load the module until the first run.
+// It panics if called after running.
 func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.ModuleLoader) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot add module loader after running")
+	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
 	}
@@ -125,10 +169,14 @@ func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.Module
 }
 
 // AddModuleData creates a module for the given module data along with a module loader, and adds it to the preload and lazyload registry.
+// It panics if called after running.
 func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot add module data after running")
+	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
 	}
@@ -141,10 +189,14 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 }
 
 // AddModuleScript creates a module with given module script in virtual filesystem, and adds it to the preload and lazyload registry.
+// It panics if called after running.
 func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.hasRun {
+		log.DPanic("cannot add module script after running")
+	}
 	if s.scriptMods == nil {
 		s.scriptMods = make(map[string]string)
 	}
