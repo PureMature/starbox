@@ -48,23 +48,52 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 	// set variables
 	s.Machine.SetGlobals(s.globals)
 
-	// TODO: add prest builtin and distinct --- e.g. full, network, etc
+	// extract module loaders
+	preMods, lazyMods, err := s.extractModuleLoaders()
+	if err != nil {
+		return err
+	}
 
-	// preset modules
-	var (
-		preMods  starlet.ModuleLoaderList
-		lazyMods starlet.ModuleLoaderMap
-	)
+	// set modules to machine
+	if len(preMods) > 0 || len(lazyMods) > 0 {
+		s.Machine.SetPreloadModules(preMods)
+		s.Machine.SetLazyloadModules(lazyMods)
+	}
+
+	// prepare script modules
+	var modFS fs.FS
+	if len(s.scriptMods) > 0 {
+		rootFS := memfs.New()
+		for fp, scr := range s.scriptMods {
+			// TODO: support directory/file.star later
+			if err := rootFS.WriteFile(fp, []byte(scr), 0644); err != nil {
+				return err
+			}
+		}
+		modFS = rootFS
+	}
+
+	// set script
+	s.Machine.SetScript("box.star", []byte(script), modFS)
+
+	// all is done
+	return nil
+}
+
+func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazyMods starlet.ModuleLoaderMap, err error) {
+	// TODO: add preset builtin and distinct --- e.g. full, network, etc
+
+	// preset module names
 	if len(s.builtMods) > 0 {
 		if preMods, err = starlet.MakeBuiltinModuleLoaderList(s.builtMods...); err != nil {
-			return err
+			return nil, nil, err
 		}
 		if lazyMods, err = starlet.MakeBuiltinModuleLoaderMap(s.builtMods...); err != nil {
-			return err
+			return nil, nil, err
 		}
 	}
 
-	// custom modules
+	// custom module loaders
 	if len(s.loadMods) > 0 {
 		if preMods == nil {
 			preMods = make(starlet.ModuleLoaderList, 0, len(s.loadMods))
@@ -78,28 +107,6 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 		}
 	}
 
-	// set modules to machine
-	if len(preMods) > 0 || len(lazyMods) > 0 {
-		s.Machine.SetPreloadModules(preMods)
-		s.Machine.SetLazyloadModules(lazyMods)
-	}
-
-	// prepare script modules
-	var modFS fs.FS
-	if len(s.scriptMods) > 0 {
-		rootFS := memfs.New()
-		for name, script := range s.scriptMods {
-			// TODO: support directory/file.star later
-			if err := rootFS.WriteFile(name, []byte(script), 0644); err != nil {
-				return err
-			}
-		}
-		modFS = rootFS
-	}
-
-	// set script
-	s.Machine.SetScript("box.star", []byte(script), modFS)
-
-	// all is done
-	return nil
+	// result
+	return preMods, lazyMods, nil
 }
