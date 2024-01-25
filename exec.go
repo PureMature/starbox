@@ -75,9 +75,6 @@ func (s *Starbox) Reset() {
 }
 
 func (s *Starbox) prepareEnv(script string) (err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	// set custom tag and print function
 	if s.tagName != "" {
 		s.mac.SetCustomTag(s.tagName)

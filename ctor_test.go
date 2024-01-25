@@ -4,8 +4,13 @@ import (
 	"encoding/json"
 	"testing"
 
+	"bitbucket.org/ai69/amoy"
 	"github.com/1set/starlet"
 	"github.com/PureMature/starbox"
+)
+
+var (
+	HereDoc = amoy.HereDocf
 )
 
 func TestProbe(t *testing.T) {
@@ -24,7 +29,10 @@ func TestNew(t *testing.T) {
 
 func TestCreateAndRun(t *testing.T) {
 	b := starbox.New("test")
-	out, err := b.Run(`print('hello world')`)
+	out, err := b.Run(HereDoc(`
+		s = 'Aloha!'
+		print(s)
+	`))
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,7 +42,7 @@ func TestCreateAndRun(t *testing.T) {
 	if len(out) != 1 {
 		t.Errorf("expect 1, got %d", len(out))
 	}
-	if out["print"] != "hello world\n" {
-		t.Errorf("expect 'hello world\n', got %s", out["print"])
+	if es := "Aloha!"; out["s"] != es {
+		t.Errorf("expect %q, got %q", es, out["print"])
 	}
 }
