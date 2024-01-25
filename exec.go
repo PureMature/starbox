@@ -8,21 +8,47 @@ import (
 )
 
 var (
-	// defaultSafeModules is the list of safe modules.
-	defaultSafeModules = []string{"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time"}
+	// defaultSafeModuleNames is the list of safe module names.
+	defaultSafeModuleNames = []string{"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time"}
 )
 
-func (s *Starbox) PrepareEnvironment(script string) (err error) {
+// Run executes a script and returns the converted output.
+func (s *Starbox) Run(script string) (starlet.StringAnyMap, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// variables
-	// if s.globals == nil {
-	// 	s.globals = make(starlet.StringAnyMap)
-	// }
+	// prepare environment
+	if err := s.prepareEnv(script); err != nil {
+		return nil, err
+	}
+
+	// run
+	return s.Machine.Run()
+}
+
+// REPL starts a REPL session.
+func (s *Starbox) REPL() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// prepare environment
+	if err := s.prepareEnv(""); err != nil {
+		return err
+	}
+
+	// run repl
+	s.Machine.REPL()
+	return nil
+}
+
+func (s *Starbox) prepareEnv(script string) (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// set variables
 	s.Machine.SetGlobals(s.globals)
 
-	// TODO: add prest builtins  --- e.g. full, network, etc
+	// TODO: add prest builtin and distinct --- e.g. full, network, etc
 
 	// preset modules
 	var (
