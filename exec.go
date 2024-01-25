@@ -2,6 +2,7 @@ package starbox
 
 import (
 	"io/fs"
+	"time"
 
 	"github.com/1set/starlet"
 	"github.com/psanford/memfs"
@@ -26,6 +27,20 @@ func (s *Starbox) Run(script string) (starlet.StringAnyMap, error) {
 	return s.Machine.Run()
 }
 
+// RunTimeout executes a script and returns the converted output.
+func (s *Starbox) RunTimeout(script string, timeout time.Duration) (starlet.StringAnyMap, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// prepare environment
+	if err := s.prepareEnv(script); err != nil {
+		return nil, err
+	}
+
+	// run
+	return s.Machine.RunWithTimeout(timeout, nil)
+}
+
 // REPL starts a REPL session.
 func (s *Starbox) REPL() error {
 	s.mu.Lock()
@@ -36,7 +51,7 @@ func (s *Starbox) REPL() error {
 		return err
 	}
 
-	// run repl
+	// run
 	s.Machine.REPL()
 	return nil
 }
