@@ -447,3 +447,45 @@ func TestAddModuleData(t *testing.T) {
 		})
 	}
 }
+
+// TestAddModuleScript tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add module script.
+// 3. Run a script that uses function from the module script.
+// 4. Check the output to see if the module script works.
+func TestAddModuleScript(t *testing.T) {
+	b := starbox.New("test")
+	b.AddModuleScript("data", HereDoc(`
+		a = 10
+		b = 20
+		c = 300
+		def shift(a, b):
+			return (a << b) + 10
+	`))
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`load("data.star", "a", "b"); c = a * b`, 200},
+		{`load("data", "shift"); c = shift(2, 10)`, 2058},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
+			}
+		})
+	}
+}
