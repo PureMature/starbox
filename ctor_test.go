@@ -10,6 +10,7 @@ import (
 	"github.com/1set/starlet"
 	"github.com/PureMature/starbox"
 	"go.starlark.net/starlark"
+	"go.starlark.net/starlarkstruct"
 )
 
 var (
@@ -33,8 +34,8 @@ func TestProbe(t *testing.T) {
 func TestNew(t *testing.T) {
 	b := starbox.New("test")
 	n := `🥡Box{name:test,run:0}`
-	if b.String() != n {
-		t.Errorf("expect %s, got %s", n, b.String())
+	if a := b.String(); a != n {
+		t.Errorf("expect %s, got %s", n, a)
 	}
 	m := b.GetMachine()
 	if m == nil {
@@ -62,7 +63,7 @@ func TestCreateAndRun(t *testing.T) {
 		t.Errorf("expect 1, got %d", len(out))
 	}
 	if es := "Aloha!"; out["s"] != es {
-		t.Errorf("expect %q, got %q", es, out["s"])
+		t.Errorf("expect %q, got %v", es, out["s"])
 	}
 }
 
@@ -112,7 +113,7 @@ func TestSetStructTag(t *testing.T) {
 				return
 			}
 			if es := tt.expected; out["s"] != es {
-				t.Errorf("expect %q, got %q", es, out["s"])
+				t.Errorf("expect %q, got %v", es, out["s"])
 			}
 		})
 	}
@@ -146,7 +147,7 @@ func TestSetPrintFunc(t *testing.T) {
 	actual := sb.String()
 	expected := "Aloha!Mahalo!"
 	if actual != expected {
-		t.Errorf("expect %q, got %q", expected, actual)
+		t.Errorf("expect %q, got %v", expected, actual)
 	}
 }
 
@@ -226,6 +227,264 @@ func TestSetModuleSet(t *testing.T) {
 					t.Errorf("expect error for non-existing module %q, got nil", m)
 					return
 				}
+			}
+		})
+	}
+}
+
+// TestAddKeyValue tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add a key-value pair.
+// 3. Run a script that uses the key-value pair.
+// 4. Check the output to see if the key-value pair is present.
+func TestAddKeyValue(t *testing.T) {
+	b := starbox.New("test")
+	b.AddKeyValue("a", 10)
+	b.AddKeyValue("b", 20)
+	out, err := b.Run(HereDoc(`c = a + b`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := int64(30); out["c"] != es {
+		t.Errorf("expect %d, got %v", es, out["c"])
+	}
+}
+
+// TestAddKeyValues tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add key-value pairs.
+// 3. Run a script that uses the key-value pairs.
+// 4. Check the output to see if the key-value pairs are present.
+func TestAddKeyValues(t *testing.T) {
+	b := starbox.New("test")
+	b.AddKeyValues(starlet.StringAnyMap{
+		"a": 10,
+		"b": 20,
+	})
+	b.AddKeyValues(starlet.StringAnyMap{
+		"c": 30,
+	})
+	out, err := b.Run(HereDoc(`d = a + b + c`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := int64(60); out["d"] != es {
+		t.Errorf("expect %d, got %v", es, out["d"])
+	}
+}
+
+// TestAddBuiltin tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add a builtin function.
+// 3. Run a script that uses the builtin function.
+// 4. Check the output to see if the builtin function works.
+func TestAddBuiltin(t *testing.T) {
+	b := starbox.New("test")
+	b.AddBuiltin("shift", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var a, b int64
+		if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+			return nil, err
+		}
+		return starlark.MakeInt64(a << b).Add(starlark.MakeInt(3)), nil
+	})
+	out, err := b.Run(HereDoc(`
+		c = shift(a=10, b=4)
+	`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := int64(163); out["c"] != es {
+		t.Errorf("expect %d, got %v", es, out["c"])
+	}
+}
+
+// TestAddNamedModules tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add named modules.
+// 3. Run a script that uses function from the named modules.
+// 4. Check the output to see if the named modules are present.
+func TestAddNamedModules(t *testing.T) {
+	b := starbox.New("test")
+	b.AddNamedModules("base64")
+	out, err := b.Run(HereDoc(`
+		s = base64.encode('Aloha!')
+	`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := `QWxvaGEh`; out["s"] != es {
+		t.Errorf("expect %q, got %v", es, out["s"])
+	}
+}
+
+// TestAddModuleLoader tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add a module loader.
+// 3. Run a script that uses function from the module loader.
+// 4. Check the output to see if the module loader works.
+func TestAddModuleLoader(t *testing.T) {
+	b := starbox.New("test")
+	b.AddModuleLoader("mine", func() (starlark.StringDict, error) {
+		return starlark.StringDict{
+			"shift": starlark.NewBuiltin("shift", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+				var a, b int64
+				if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+					return nil, err
+				}
+				return starlark.MakeInt64(a << b).Add(starlark.MakeInt(5)), nil
+			}),
+			"num": starlark.MakeInt(100),
+		}, nil
+	})
+	b.AddModuleLoader("more", func() (starlark.StringDict, error) {
+		return starlark.StringDict{
+			"less": &starlarkstruct.Module{
+				Name: "less",
+				Members: starlark.StringDict{
+					"num": starlark.MakeInt(200),
+					"plus": starlark.NewBuiltin("plus", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+						var a, b int64
+						if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+							return nil, err
+						}
+						return starlark.MakeInt64(a + b), nil
+					}),
+				},
+			},
+		}, nil
+	})
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`c = shift(a=10, b=4) + num`, 265},
+		{`load("mine", "shift", "num"); c = shift(a=10, b=5) * num`, 32500},
+		{`c = less.plus(a=10, b=4) + less.num + num`, 314},
+		{`load("more", "less"); c = less.plus(a=10, b=5) * less.num`, 3000},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
+			}
+		})
+	}
+}
+
+// TestAddModuleData tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add module data.
+// 3. Run a script that uses function from the module data.
+// 4. Check the output to see if the module data works.
+func TestAddModuleData(t *testing.T) {
+	b := starbox.New("test")
+	b.AddModuleData("data", starlark.StringDict{
+		"a": starlark.MakeInt(10),
+		"b": starlark.MakeInt(20),
+		"c": starlark.MakeInt(300),
+	})
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`c = data.a + data.b`, 30},
+		{`load("data", "a", "b"); c = a * b`, 200},
+		{`load("data", "a", "b"); c = data.c * (a+b)`, 9000},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
+			}
+		})
+	}
+}
+
+// TestAddModuleScript tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add module script.
+// 3. Run a script that uses function from the module script.
+// 4. Check the output to see if the module script works.
+func TestAddModuleScript(t *testing.T) {
+	b := starbox.New("test")
+	b.AddModuleScript("data", HereDoc(`
+		a = 10
+		b = 20
+		c = 300
+		def shift(a, b):
+			return (a << b) + 10
+	`))
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`load("data.star", "a", "b"); c = a * b`, 200},
+		{`load("data", "shift"); c = shift(2, 10)`, 2058},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
 			}
 		})
 	}

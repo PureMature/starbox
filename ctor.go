@@ -2,6 +2,8 @@ package starbox
 
 import (
 	"fmt"
+	"io/fs"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,6 +30,7 @@ type Starbox struct {
 	builtMods  []string
 	loadMods   starlet.ModuleLoaderMap
 	scriptMods map[string]string
+	modFS      fs.FS
 }
 
 // New creates a new Starbox instance with default settings.
@@ -135,8 +138,11 @@ func (s *Starbox) AddBuiltin(name string, starFunc StarlarkFunc) {
 	if s.hasRun {
 		log.DPanic("cannot add builtin after running")
 	}
+	if s.globals == nil {
+		s.globals = make(starlet.StringAnyMap)
+	}
 	sb := starlark.NewBuiltin(name, starFunc)
-	s.AddKeyValue(name, sb)
+	s.globals[name] = sb
 }
 
 // AddNamedModules adds builtin modules by name to the preload and lazyload registry.
@@ -153,7 +159,7 @@ func (s *Starbox) AddNamedModules(moduleNames ...string) {
 }
 
 // AddModuleLoader adds a custom module loader to the preload and lazyload registry.
-// It will not load the module until the first run.
+// It will not load the module until the first run, and load result can be accessed in script via load("module_name", "key1") or key1 directly.
 // It panics if called after running.
 func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.ModuleLoader) {
 	s.mu.Lock()
@@ -169,6 +175,7 @@ func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.Module
 }
 
 // AddModuleData creates a module for the given module data along with a module loader, and adds it to the preload and lazyload registry.
+// The given module data can be accessed in script via load("module_name", "key1") or module_name.key1.
 // It panics if called after running.
 func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDict) {
 	s.mu.Lock()
@@ -189,6 +196,7 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 }
 
 // AddModuleScript creates a module with given module script in virtual filesystem, and adds it to the preload and lazyload registry.
+// The given module script can be accessed in script via load("module_name", "key1") or load("module_name.star", "key1") if module name has no ".star" suffix.
 // It panics if called after running.
 func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	s.mu.Lock()
@@ -200,5 +208,9 @@ func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	if s.scriptMods == nil {
 		s.scriptMods = make(map[string]string)
 	}
-	s.scriptMods[moduleName] = moduleScript
+	name := moduleName
+	if !strings.HasSuffix(name, ".star") {
+		name += ".star"
+	}
+	s.scriptMods[name] = moduleScript
 }
