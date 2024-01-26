@@ -13,12 +13,16 @@ var (
 	HereDoc = amoy.HereDocf
 )
 
+// TestProbe is a playground for exploring the external packages.
 func TestProbe(t *testing.T) {
 	x := starlet.GetAllBuiltinModuleNames()
 	xj, _ := json.Marshal(x)
 	t.Log(string(xj))
 }
 
+// TestNew tests the following:
+// 1. Create a new Starbox instance.
+// 2. Check the Stringer output.
 func TestNew(t *testing.T) {
 	b := starbox.New("test")
 	n := `🥡Box{name:test,run:0}`
@@ -27,6 +31,10 @@ func TestNew(t *testing.T) {
 	}
 }
 
+// TestCreateAndRun tests the following:
+// 1. Create a new Starbox instance.
+// 2. Run a script.
+// 3. Check the output.
 func TestCreateAndRun(t *testing.T) {
 	b := starbox.New("test")
 	out, err := b.Run(HereDoc(`
