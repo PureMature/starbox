@@ -324,8 +324,10 @@ func TestAddBuiltin(t *testing.T) {
 func TestAddNamedModules(t *testing.T) {
 	b := starbox.New("test")
 	b.AddNamedModules("base64")
+	b.AddNamedModules("runtime")
 	out, err := b.Run(HereDoc(`
 		s = base64.encode('Aloha!')
+		t = type(runtime.pid)
 	`))
 	if err != nil {
 		t.Error(err)
@@ -333,11 +335,14 @@ func TestAddNamedModules(t *testing.T) {
 	if out == nil {
 		t.Error("expect not nil, got nil")
 	}
-	if len(out) != 1 {
-		t.Errorf("expect 1, got %d", len(out))
+	if len(out) != 2 {
+		t.Errorf("expect 2, got %d", len(out))
 	}
 	if es := `QWxvaGEh`; out["s"] != es {
 		t.Errorf("expect %q, got %v", es, out["s"])
+	}
+	if es := `int`; out["t"] != es {
+		t.Errorf("expect %q, got %v", es, out["t"])
 	}
 }
 
