@@ -38,6 +38,7 @@ func (s *Starbox) RunTimeout(script string, timeout time.Duration) (starlet.Stri
 
 	// prepare environment
 	if !s.hasRun {
+		// for the first run
 		if err := s.prepareEnv(script); err != nil {
 			return nil, err
 		}
