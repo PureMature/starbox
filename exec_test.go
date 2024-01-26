@@ -2,6 +2,7 @@ package starbox_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/1set/starlet"
 	"github.com/PureMature/starbox"
@@ -16,6 +17,61 @@ func TestSimpleRun(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 	if out["s"] != "hello world" {
+		t.Errorf("unexpected output: %v", out)
+	}
+}
+
+func TestRunTimeout(t *testing.T) {
+	// timeout
+	b := starbox.New("test")
+	b.SetModuleSet(starbox.SafeModuleSet)
+	out, err := b.RunTimeout(`sleep(1.5)`, time.Second)
+	if err == nil {
+		t.Errorf("expected error but not, output: %v", out)
+	}
+
+	// no timeout
+	b.Reset()
+	out, err = b.RunTimeout(`sleep(0.2)`, time.Second)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestRunTwice(t *testing.T) {
+	b := starbox.New("test")
+	out, err := b.Run(`a = 10`)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["a"] != int64(10) {
+		t.Errorf("unexpected output: %v", out)
+	}
+
+	out, err = b.Run(`b = a << 2`)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["b"] != int64(40) {
+		t.Errorf("unexpected output: %v", out)
+	}
+}
+
+func TestRunTimeoutTwice(t *testing.T) {
+	b := starbox.New("test")
+	out, err := b.RunTimeout(`a = 10`, time.Second)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["a"] != int64(10) {
+		t.Errorf("unexpected output: %v", out)
+	}
+
+	out, err = b.RunTimeout(`b = a << 2`, time.Second)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["b"] != int64(40) {
 		t.Errorf("unexpected output: %v", out)
 	}
 }
