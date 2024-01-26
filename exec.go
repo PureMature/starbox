@@ -41,6 +41,9 @@ func (s *Starbox) RunTimeout(script string, timeout time.Duration) (starlet.Stri
 		if err := s.prepareEnv(script); err != nil {
 			return nil, err
 		}
+	} else {
+		// for the following runs
+		s.mac.SetScript("box.star", []byte(script), s.modFS)
 	}
 
 	// run
@@ -54,7 +57,7 @@ func (s *Starbox) REPL() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// prepare environment
+	// prepare environment -- no need to set script content
 	if !s.hasRun {
 		if err := s.prepareEnv(""); err != nil {
 			return err

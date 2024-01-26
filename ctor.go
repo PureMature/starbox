@@ -208,7 +208,7 @@ func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	if s.scriptMods == nil {
 		s.scriptMods = make(map[string]string)
 	}
-	name := moduleName
+	name := strings.TrimSpace(moduleName)
 	if !strings.HasSuffix(name, ".star") {
 		name += ".star"
 	}

@@ -179,7 +179,7 @@ func TestSetAddRunError(t *testing.T) {
 		{
 			name: "add invalid module script",
 			fn: func(b *starbox.Starbox) {
-				b.AddModuleScript("abc/def.star", HereDoc(`
+				b.AddModuleScript("///", HereDoc(`
 					a = 10
 					b = 20
 					c = 300
@@ -190,6 +190,7 @@ func TestSetAddRunError(t *testing.T) {
 			name: "add invalid key value",
 			fn: func(b *starbox.Starbox) {
 				b.AddKeyValue("abc", make(chan int))
+				//b.AddKeyValue("def cdf", 123)
 			},
 		},
 	}
@@ -197,8 +198,8 @@ func TestSetAddRunError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			b := starbox.New("test")
 			tt.fn(b)
-			if _, err := b.Run(`z = 123`); err == nil {
-				t.Errorf("expected error but not")
+			if out, err := b.Run(`z = 123`); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
 			}
 		})
 	}
