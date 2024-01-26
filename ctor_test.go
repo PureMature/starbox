@@ -29,11 +29,16 @@ func TestProbe(t *testing.T) {
 // TestNew tests the following:
 // 1. Create a new Starbox instance.
 // 2. Check the Stringer output.
+// 3. Check the underlying starlet.Machine instance.
 func TestNew(t *testing.T) {
 	b := starbox.New("test")
 	n := `🥡Box{name:test,run:0}`
 	if b.String() != n {
 		t.Errorf("expect %s, got %s", n, b.String())
+	}
+	m := b.GetMachine()
+	if m == nil {
+		t.Error("expect not nil, got nil")
 	}
 }
 
