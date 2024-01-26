@@ -239,32 +239,7 @@ func TestSetModuleSet(t *testing.T) {
 func TestAddKeyValue(t *testing.T) {
 	b := starbox.New("test")
 	b.AddKeyValue("a", 10)
-	out, err := b.Run(HereDoc(`b = a + 1`))
-	if err != nil {
-		t.Error(err)
-	}
-	if out == nil {
-		t.Error("expect not nil, got nil")
-	}
-	if len(out) != 1 {
-		t.Errorf("expect 1, got %d", len(out))
-	}
-	if es := int64(11); out["b"] != es {
-		t.Errorf("expect %d, got %d", es, out["b"])
-	}
-}
-
-// TestAddKeyValues tests the following:
-// 1. Create a new Starbox instance.
-// 2. Add key-value pairs.
-// 3. Run a script that uses the key-value pairs.
-// 4. Check the output to see if the key-value pairs are present.
-func TestAddKeyValues(t *testing.T) {
-	b := starbox.New("test")
-	b.AddKeyValues(starlet.StringAnyMap{
-		"a": 10,
-		"b": 20,
-	})
+	b.AddKeyValue("b", 20)
 	out, err := b.Run(HereDoc(`c = a + b`))
 	if err != nil {
 		t.Error(err)
@@ -279,3 +254,34 @@ func TestAddKeyValues(t *testing.T) {
 		t.Errorf("expect %d, got %d", es, out["c"])
 	}
 }
+
+// TestAddKeyValues tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add key-value pairs.
+// 3. Run a script that uses the key-value pairs.
+// 4. Check the output to see if the key-value pairs are present.
+func TestAddKeyValues(t *testing.T) {
+	b := starbox.New("test")
+	b.AddKeyValues(starlet.StringAnyMap{
+		"a": 10,
+		"b": 20,
+	})
+	b.AddKeyValues(starlet.StringAnyMap{
+		"c": 30,
+	})
+	out, err := b.Run(HereDoc(`d = a + b + c`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := int64(60); out["d"] != es {
+		t.Errorf("expect %d, got %d", es, out["d"])
+	}
+}
+
+//
