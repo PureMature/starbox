@@ -356,14 +356,53 @@ func TestAddModuleLoader(t *testing.T) {
 				}
 				return starlark.MakeInt64(a << b).Add(starlark.MakeInt(5)), nil
 			}),
+			"num": starlark.MakeInt(100),
 		}, nil
 	})
 	tests := []struct {
 		script string
 		want   int64
 	}{
-		{`c = shift(a=10, b=4)`, 165},
-		{`load("mine", "shift"); c = shift(a=10, b=5)`, 325},
+		{`c = shift(a=10, b=4) + num`, 265},
+		{`load("mine", "shift", "num"); c = shift(a=10, b=5) * num`, 32500},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			//b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
+			}
+		})
+	}
+}
+
+// TestAddModuleData tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add module data.
+// 3. Run a script that uses function from the module data.
+// 4. Check the output to see if the module data works.
+func TestAddModuleData(t *testing.T) {
+	b := starbox.New("test")
+	b.AddModuleData("data", starlark.StringDict{
+		"a": starlark.MakeInt(10),
+		"b": starlark.MakeInt(20),
+	})
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`load("data", "a", "b"); c = a * b`, 200},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
