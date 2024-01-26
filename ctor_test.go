@@ -33,8 +33,8 @@ func TestProbe(t *testing.T) {
 func TestNew(t *testing.T) {
 	b := starbox.New("test")
 	n := `🥡Box{name:test,run:0}`
-	if b.String() != n {
-		t.Errorf("expect %s, got %s", n, b.String())
+	if a := b.String(); a != n {
+		t.Errorf("expect %s, got %s", n, a)
 	}
 	m := b.GetMachine()
 	if m == nil {
@@ -62,7 +62,7 @@ func TestCreateAndRun(t *testing.T) {
 		t.Errorf("expect 1, got %d", len(out))
 	}
 	if es := "Aloha!"; out["s"] != es {
-		t.Errorf("expect %q, got %q", es, out["s"])
+		t.Errorf("expect %q, got %v", es, out["s"])
 	}
 }
 
@@ -112,7 +112,7 @@ func TestSetStructTag(t *testing.T) {
 				return
 			}
 			if es := tt.expected; out["s"] != es {
-				t.Errorf("expect %q, got %q", es, out["s"])
+				t.Errorf("expect %q, got %v", es, out["s"])
 			}
 		})
 	}
@@ -146,7 +146,7 @@ func TestSetPrintFunc(t *testing.T) {
 	actual := sb.String()
 	expected := "Aloha!Mahalo!"
 	if actual != expected {
-		t.Errorf("expect %q, got %q", expected, actual)
+		t.Errorf("expect %q, got %v", expected, actual)
 	}
 }
 
@@ -251,7 +251,7 @@ func TestAddKeyValue(t *testing.T) {
 		t.Errorf("expect 1, got %d", len(out))
 	}
 	if es := int64(30); out["c"] != es {
-		t.Errorf("expect %d, got %d", es, out["c"])
+		t.Errorf("expect %d, got %v", es, out["c"])
 	}
 }
 
@@ -280,8 +280,37 @@ func TestAddKeyValues(t *testing.T) {
 		t.Errorf("expect 1, got %d", len(out))
 	}
 	if es := int64(60); out["d"] != es {
-		t.Errorf("expect %d, got %d", es, out["d"])
+		t.Errorf("expect %d, got %v", es, out["d"])
 	}
 }
 
-//
+// TestAddBuiltin tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add a builtin function.
+// 3. Run a script that uses the builtin function.
+// 4. Check the output to see if the builtin function works.
+func TestAddBuiltin(t *testing.T) {
+	b := starbox.New("test")
+	b.AddBuiltin("shift", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var a, b int64
+		if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+			return nil, err
+		}
+		return starlark.MakeInt64(a << b), nil
+	})
+	out, err := b.Run(HereDoc(`
+		c = shift(a=10, b=4)
+	`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := int64(160); out["c"] != es {
+		t.Errorf("expect %d, got %v", es, out["c"])
+	}
+}
