@@ -296,7 +296,7 @@ func TestAddBuiltin(t *testing.T) {
 		if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
 			return nil, err
 		}
-		return starlark.MakeInt64(a << b), nil
+		return starlark.MakeInt64(a << b).Add(starlark.MakeInt(3)), nil
 	})
 	out, err := b.Run(HereDoc(`
 		c = shift(a=10, b=4)
@@ -310,7 +310,7 @@ func TestAddBuiltin(t *testing.T) {
 	if len(out) != 1 {
 		t.Errorf("expect 1, got %d", len(out))
 	}
-	if es := int64(160); out["c"] != es {
+	if es := int64(163); out["c"] != es {
 		t.Errorf("expect %d, got %v", es, out["c"])
 	}
 }
