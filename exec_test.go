@@ -129,8 +129,19 @@ func TestRunAndSetAddPanic(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run("normal_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			_, err := b.Run(`z = 123`)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+
+	for _, tt := range tests {
+		t.Run("after_"+tt.name, func(t *testing.T) {
 			box := getBox(t)
 			defer func() {
 				if r := recover(); r == nil {
