@@ -139,13 +139,15 @@ func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazy
 	)
 	for _, name := range modNames {
 		if load, ok := localModuleLoaders[name]; ok {
+			// for local module loaders
 			modLoads[name] = load
 		} else {
+			// for starlet module names
 			letModNames = append(letModNames, name)
 		}
 	}
 	modNames = letModNames
-	modLoads.Merge(s.loadMods)
+	modLoads.Merge(s.loadMods) // custom module loaders overwrites local module loaders with the same name
 
 	// convert starlet builtin module names to module loaders
 	if len(modNames) > 0 {

@@ -10,6 +10,7 @@ import (
 	"github.com/1set/starlet"
 	"github.com/PureMature/starbox"
 	"go.starlark.net/starlark"
+	"go.starlark.net/starlarkstruct"
 )
 
 var (
@@ -359,16 +360,35 @@ func TestAddModuleLoader(t *testing.T) {
 			"num": starlark.MakeInt(100),
 		}, nil
 	})
+	b.AddModuleLoader("more", func() (starlark.StringDict, error) {
+		return starlark.StringDict{
+			"less": &starlarkstruct.Module{
+				Name: "less",
+				Members: starlark.StringDict{
+					"num": starlark.MakeInt(200),
+					"plus": starlark.NewBuiltin("plus", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+						var a, b int64
+						if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+							return nil, err
+						}
+						return starlark.MakeInt64(a + b), nil
+					}),
+				},
+			},
+		}, nil
+	})
 	tests := []struct {
 		script string
 		want   int64
 	}{
 		{`c = shift(a=10, b=4) + num`, 265},
 		{`load("mine", "shift", "num"); c = shift(a=10, b=5) * num`, 32500},
+		{`c = less.plus(a=10, b=4) + less.num + num`, 314},
+		{`load("more", "less"); c = less.plus(a=10, b=5) * less.num`, 3000},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			//b.Reset()
+			b.Reset()
 			out, err := b.Run(HereDoc(tt.script))
 			if err != nil {
 				t.Error(err)
@@ -397,16 +417,19 @@ func TestAddModuleData(t *testing.T) {
 	b.AddModuleData("data", starlark.StringDict{
 		"a": starlark.MakeInt(10),
 		"b": starlark.MakeInt(20),
+		"c": starlark.MakeInt(300),
 	})
 	tests := []struct {
 		script string
 		want   int64
 	}{
+		{`c = data.a + data.b`, 30},
 		{`load("data", "a", "b"); c = a * b`, 200},
+		{`load("data", "a", "b"); c = data.c * (a+b)`, 9000},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			//b.Reset()
+			b.Reset()
 			out, err := b.Run(HereDoc(tt.script))
 			if err != nil {
 				t.Error(err)

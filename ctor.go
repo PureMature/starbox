@@ -158,7 +158,7 @@ func (s *Starbox) AddNamedModules(moduleNames ...string) {
 }
 
 // AddModuleLoader adds a custom module loader to the preload and lazyload registry.
-// It will not load the module until the first run.
+// It will not load the module until the first run, and load result can be accessed in script via load("module_name", "key1") or key1 directly.
 // It panics if called after running.
 func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.ModuleLoader) {
 	s.mu.Lock()
@@ -174,6 +174,7 @@ func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.Module
 }
 
 // AddModuleData creates a module for the given module data along with a module loader, and adds it to the preload and lazyload registry.
+// The given module data can be accessed in script via load("module_name", "key1") or module_name.key1.
 // It panics if called after running.
 func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDict) {
 	s.mu.Lock()
