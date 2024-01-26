@@ -314,3 +314,74 @@ func TestAddBuiltin(t *testing.T) {
 		t.Errorf("expect %d, got %v", es, out["c"])
 	}
 }
+
+// TestAddNamedModules tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add named modules.
+// 3. Run a script that uses function from the named modules.
+// 4. Check the output to see if the named modules are present.
+func TestAddNamedModules(t *testing.T) {
+	b := starbox.New("test")
+	b.AddNamedModules("base64")
+	out, err := b.Run(HereDoc(`
+		s = base64.encode('Aloha!')
+	`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := `QWxvaGEh`; out["s"] != es {
+		t.Errorf("expect %q, got %v", es, out["s"])
+	}
+}
+
+// TestAddModuleLoader tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add a module loader.
+// 3. Run a script that uses function from the module loader.
+// 4. Check the output to see if the module loader works.
+func TestAddModuleLoader(t *testing.T) {
+	b := starbox.New("test")
+	b.AddModuleLoader("mine", func() (starlark.StringDict, error) {
+		return starlark.StringDict{
+			"shift": starlark.NewBuiltin("shift", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+				var a, b int64
+				if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+					return nil, err
+				}
+				return starlark.MakeInt64(a << b).Add(starlark.MakeInt(5)), nil
+			}),
+		}, nil
+	})
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`c = shift(a=10, b=4)`, 165},
+		{`load("mine", "shift"); c = shift(a=10, b=5)`, 325},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			//b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
+			}
+		})
+	}
+}

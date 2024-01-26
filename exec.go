@@ -16,9 +16,13 @@ func (s *Starbox) Run(script string) (starlet.StringAnyMap, error) {
 
 	// prepare environment
 	if !s.hasRun {
+		// for the first run
 		if err := s.prepareEnv(script); err != nil {
 			return nil, err
 		}
+	} else {
+		// for the following runs
+		s.mac.SetScript("box.star", []byte(script), s.modFS)
 	}
 
 	// run
@@ -109,6 +113,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 			}
 		}
 		modFS = rootFS
+		s.modFS = rootFS
 	}
 
 	// set script
@@ -130,13 +135,10 @@ func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazy
 	// separate local module loaders from starlet module names
 	var (
 		letModNames []string
-		modLoads    starlet.ModuleLoaderMap
+		modLoads    = make(starlet.ModuleLoaderMap, len(modNames))
 	)
 	for _, name := range modNames {
 		if load, ok := localModuleLoaders[name]; ok {
-			if modLoads == nil {
-				modLoads = make(starlet.ModuleLoaderMap, len(modNames))
-			}
 			modLoads[name] = load
 		} else {
 			letModNames = append(letModNames, name)

@@ -2,6 +2,7 @@ package starbox
 
 import (
 	"fmt"
+	"io/fs"
 	"sync"
 	"time"
 
@@ -28,6 +29,7 @@ type Starbox struct {
 	builtMods  []string
 	loadMods   starlet.ModuleLoaderMap
 	scriptMods map[string]string
+	modFS      fs.FS
 }
 
 // New creates a new Starbox instance with default settings.
