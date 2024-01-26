@@ -20,7 +20,7 @@ func TestSimpleRun(t *testing.T) {
 	}
 }
 
-func TestRunAndSetAddPanic(t *testing.T) {
+func TestSetAddRunPanic(t *testing.T) {
 	getBox := func(t *testing.T) *starbox.Starbox {
 		b := starbox.New("test")
 		out, err := b.Run(`s = "hello world"`)
@@ -149,6 +149,57 @@ func TestRunAndSetAddPanic(t *testing.T) {
 				}
 			}()
 			tt.fn(box)
+		})
+	}
+}
+
+func TestSetAddRunError(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(b *starbox.Starbox)
+	}{
+		{
+			name: "set invalid module set",
+			fn: func(b *starbox.Starbox) {
+				b.SetModuleSet("missing")
+			},
+		},
+		{
+			name: "add empty named module",
+			fn: func(b *starbox.Starbox) {
+				b.AddNamedModules("")
+			},
+		},
+		{
+			name: "add invalid named module",
+			fn: func(b *starbox.Starbox) {
+				b.AddNamedModules("dont_exist")
+			},
+		},
+		{
+			name: "add invalid module script",
+			fn: func(b *starbox.Starbox) {
+				b.AddModuleScript("abc/def.star", HereDoc(`
+					a = 10
+					b = 20
+					c = 300
+				`))
+			},
+		},
+		{
+			name: "add invalid key value",
+			fn: func(b *starbox.Starbox) {
+				b.AddKeyValue("abc", make(chan int))
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if _, err := b.Run(`z = 123`); err == nil {
+				t.Errorf("expected error but not")
+			}
 		})
 	}
 }
