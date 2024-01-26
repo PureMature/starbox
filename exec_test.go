@@ -1,13 +1,13 @@
 package starbox_test
 
 import (
-	"go.starlark.net/starlarkstruct"
 	"testing"
 	"time"
 
 	"github.com/1set/starlet"
 	"github.com/PureMature/starbox"
 	"go.starlark.net/starlark"
+	"go.starlark.net/starlarkstruct"
 	"go.uber.org/zap"
 )
 
@@ -188,7 +188,7 @@ func TestSetAddRunPanic(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run("normal_"+tt.name, func(t *testing.T) {
+		t.Run("before_"+tt.name, func(t *testing.T) {
 			b := starbox.New("test")
 			_, err := b.Run(`z = 123`)
 			if err != nil {
@@ -252,10 +252,19 @@ func TestSetAddRunError(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run("normal_"+tt.name, func(t *testing.T) {
 			b := starbox.New("test")
 			tt.fn(b)
 			if out, err := b.Run(`z = 123`); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("timeout_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunTimeout(`z = 123`, time.Second); err == nil {
 				t.Errorf("expected error but not, output: %v", out)
 			}
 		})
