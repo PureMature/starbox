@@ -77,6 +77,35 @@ func TestRunTimeoutTwice(t *testing.T) {
 	}
 }
 
+func TestRunWithPreviousResult(t *testing.T) {
+	b1 := starbox.New("test1")
+	out, err := b1.Run(HereDoc(`
+		a = 10; b = 20; c = 30
+
+		def mul(*args):
+			v = 1
+			for a in args:
+				v *= a
+			return v
+	`))
+	if err != nil {
+		t.Errorf("unexpected error1: %v", err)
+	}
+	if out["a"] != int64(10) || out["b"] != int64(20) || out["c"] != int64(30) {
+		t.Errorf("unexpected output1: %v", out)
+	}
+
+	b2 := starbox.New("test2")
+	b2.AddKeyValues(out)
+	out, err = b2.Run(`d = a + b + c + mul(a, b, c)`)
+	if err != nil {
+		t.Errorf("unexpected error2: %v", err)
+	}
+	if out["d"] != int64(6060) {
+		t.Errorf("unexpected output2: %v", out)
+	}
+}
+
 func TestSetAddRunPanic(t *testing.T) {
 	getBox := func(t *testing.T) *starbox.Starbox {
 		b := starbox.New("test")
