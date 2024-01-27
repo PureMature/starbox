@@ -185,6 +185,17 @@ func TestSetAddRunPanic(t *testing.T) {
 				`))
 			},
 		},
+		{
+			name: "add module script using module",
+			fn: func(b *starbox.Starbox) {
+				b.AddNamedModules("base64")
+				b.AddModuleScript("data", HereDoc(`
+					load("base64", "encode")
+					a = encode("hello world")
+					print(a, base64.encode("Aloha!"))
+				`))
+			},
+		},
 	}
 
 	for _, tt := range tests {
