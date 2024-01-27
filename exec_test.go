@@ -22,6 +22,17 @@ func TestSimpleRun(t *testing.T) {
 	}
 }
 
+func TestEmptyRun(t *testing.T) {
+	b := starbox.New("test")
+	out, err := b.Run(``)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if len(out) != 0 {
+		t.Errorf("unexpected output: %v", out)
+	}
+}
+
 func TestRunTimeout(t *testing.T) {
 	// timeout
 	b := starbox.New("test")
