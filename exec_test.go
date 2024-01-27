@@ -22,6 +22,17 @@ func TestSimpleRun(t *testing.T) {
 	}
 }
 
+func TestEmptyRun(t *testing.T) {
+	b := starbox.New("test")
+	out, err := b.Run(``)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if len(out) != 0 {
+		t.Errorf("unexpected output: %v", out)
+	}
+}
+
 func TestRunTimeout(t *testing.T) {
 	// timeout
 	b := starbox.New("test")
@@ -75,6 +86,70 @@ func TestRunTimeoutTwice(t *testing.T) {
 	if out["b"] != int64(40) {
 		t.Errorf("unexpected output: %v", out)
 	}
+}
+
+func TestRunWithPreviousResult(t *testing.T) {
+	b1 := starbox.New("test1")
+	out, err := b1.Run(HereDoc(`
+		a = 10; b = 20; c = 30
+
+		def mul(*args):
+			v = 1
+			for a in args:
+				v *= a
+			return v
+	`))
+	if err != nil {
+		t.Errorf("unexpected error1: %v", err)
+	}
+	if out["a"] != int64(10) || out["b"] != int64(20) || out["c"] != int64(30) {
+		t.Errorf("unexpected output1: %v", out)
+	}
+
+	b2 := starbox.New("test2")
+	b2.AddKeyValues(out)
+	out, err = b2.Run(`d = a + b + c + mul(a, b, c)`)
+	if err != nil {
+		t.Errorf("unexpected error2: %v", err)
+	}
+	if out["d"] != int64(6060) {
+		t.Errorf("unexpected output2: %v", out)
+	}
+}
+
+// TestREPL tests the following:
+// 1. Create a new Starbox instance.
+// 2. Run the REPL.
+func TestREPL(t *testing.T) {
+	b := starbox.New("test")
+	if err := b.REPL(); err != nil {
+		t.Error(err)
+	}
+}
+
+// TestRunInspect tests the following:
+// 1. Create a new Starbox instance.
+// 2. Run a script that uses the inspect function.
+// 3. Check the output.
+func TestRunInspect(t *testing.T) {
+	b1 := starbox.New("test1")
+	out, err := b1.RunInspect(HereDoc(`
+		a = 123
+		s = invalid(1)
+	`))
+	if err == nil {
+		t.Errorf("expected error but not, output: %v", out)
+	}
+	t.Logf("output1: %v", out)
+
+	b2 := starbox.New("test2")
+	out, err = b2.RunInspect(HereDoc(`
+		a = 456
+	`))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	t.Logf("output2: %v", out)
 }
 
 func TestSetAddRunPanic(t *testing.T) {
@@ -185,6 +260,17 @@ func TestSetAddRunPanic(t *testing.T) {
 				`))
 			},
 		},
+		{
+			name: "add module script using module",
+			fn: func(b *starbox.Starbox) {
+				b.AddNamedModules("base64")
+				b.AddModuleScript("data", HereDoc(`
+					load("base64", "encode")
+					a = encode("hello world")
+					print(a, base64.encode("Aloha!"))
+				`))
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -210,7 +296,7 @@ func TestSetAddRunPanic(t *testing.T) {
 	}
 }
 
-func TestSetAddRunError(t *testing.T) {
+func TestSetAddPrepareError(t *testing.T) {
 	tests := []struct {
 		name string
 		fn   func(b *starbox.Starbox)
@@ -243,11 +329,54 @@ func TestSetAddRunError(t *testing.T) {
 				`))
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run("normal_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.Run(`z = 123`); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("timeout_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunTimeout(`z = 123`, time.Second); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("repl_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if err := b.REPL(); err == nil {
+				t.Errorf("expected error but not")
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("inspect_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunInspect(`z = 123`); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+}
+
+func TestSetAddRunError(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(b *starbox.Starbox)
+	}{
 		{
 			name: "add invalid key value",
 			fn: func(b *starbox.Starbox) {
 				b.AddKeyValue("abc", make(chan int))
-				//b.AddKeyValue("def cdf", 123)
 			},
 		},
 	}
@@ -265,6 +394,15 @@ func TestSetAddRunError(t *testing.T) {
 			b := starbox.New("test")
 			tt.fn(b)
 			if out, err := b.RunTimeout(`z = 123`, time.Second); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("inspect_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunInspect(`z = 123`); err == nil {
 				t.Errorf("expected error but not, output: %v", out)
 			}
 		})
@@ -402,6 +540,29 @@ func TestOverrideModuleScript(t *testing.T) {
 	}
 }
 
+// TestConflictGlobalModule tests if the global variable is overridden by the module data.
+// Since the extra variables in Starlet are not set, the module data will override the global variable, and there's no way to override the module data.
+func TestConflictGlobalModule(t *testing.T) {
+	b := starbox.New("test")
+	b.AddNamedModules("go_idiomatic")
+	b.AddKeyValues(starlet.StringAnyMap{
+		"bin": 1024,
+		"hex": "0x400",
+	})
+	// check if the module is loaded and the member is overridden
+	out, err := b.Run(HereDoc(`
+		print(type(bin), type(hex), type(sum))
+		# res = sum([bin, 10]); x = hex + " " + str(bin)
+		x = bin(10) + " " + hex(2048)
+	`))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if es := `0b1010 0x800`; out["x"] != es {
+		t.Errorf("unexpected output: %v", out)
+	}
+}
+
 func TestConflictModuleMemberLoader(t *testing.T) {
 	name := "go_idiomatic"
 	b := starbox.New("test")
@@ -450,5 +611,39 @@ func TestConflictModuleStructLoader(t *testing.T) {
 	}
 	if out["res"] != int64(1145) {
 		t.Errorf("unexpected output: %v", out)
+	}
+}
+
+func TestModuleLoaderOnce(t *testing.T) {
+	name := "mine"
+	b := starbox.New("test")
+	loadCnt := 0
+	loadFunc := func() (starlark.StringDict, error) {
+		loadCnt++
+		return starlark.StringDict{
+			"num": starlark.MakeInt(loadCnt * 100),
+		}, nil
+	}
+	// actually twice --- once for preload, once for lazyload
+	b.AddModuleLoader(name, loadFunc)
+	b.AddModuleLoader(name, loadFunc)
+	b.AddModuleLoader(name, loadFunc)
+	out, err := b.Run(HereDoc(`
+		r1 = num+1
+		load("mine", "num")
+		load("mine", "num")
+		r2 = num+2
+	`))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["r1"] != int64(101) {
+		t.Errorf("unexpected output r1: %v", out)
+	}
+	if out["r2"] != int64(202) {
+		t.Errorf("unexpected output r2: %v", out)
+	}
+	if loadCnt != 2 {
+		t.Errorf("unexpected load count: %d", loadCnt)
 	}
 }
