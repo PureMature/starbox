@@ -377,7 +377,6 @@ func TestSetAddRunError(t *testing.T) {
 			name: "add invalid key value",
 			fn: func(b *starbox.Starbox) {
 				b.AddKeyValue("abc", make(chan int))
-				//b.AddKeyValue("def cdf", 123)
 			},
 		},
 	}
