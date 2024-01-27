@@ -140,7 +140,7 @@ func TestRunInspect(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error but not, output: %v", out)
 	}
-	t.Logf("output: %v", out)
+	t.Logf("output1: %v", out)
 
 	b2 := starbox.New("test2")
 	out, err = b2.Run(HereDoc(`
@@ -149,7 +149,7 @@ func TestRunInspect(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	t.Logf("output: %v", out)
+	t.Logf("output2: %v", out)
 }
 
 func TestSetAddRunPanic(t *testing.T) {
