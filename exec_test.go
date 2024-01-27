@@ -442,6 +442,29 @@ func TestOverrideModuleScript(t *testing.T) {
 	}
 }
 
+// TestConflictGlobalModule tests if the global variable is overridden by the module data.
+// Since the extra variables in Starlet are not set, the module data will override the global variable, and there's no way to override the module data.
+func TestConflictGlobalModule(t *testing.T) {
+	b := starbox.New("test")
+	b.AddNamedModules("go_idiomatic")
+	b.AddKeyValues(starlet.StringAnyMap{
+		"bin": 1024,
+		"hex": "0x400",
+	})
+	// check if the module is loaded and the member is overridden
+	out, err := b.Run(HereDoc(`
+		print(type(bin), type(hex), type(sum))
+		# res = sum([bin, 10]); x = hex + " " + str(bin)
+		x = bin(10) + " " + hex(2048)
+	`))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if es := `0b1010 0x800`; out["x"] != es {
+		t.Errorf("unexpected output: %v", out)
+	}
+}
+
 func TestConflictModuleMemberLoader(t *testing.T) {
 	name := "go_idiomatic"
 	b := starbox.New("test")
