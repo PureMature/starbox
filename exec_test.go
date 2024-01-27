@@ -613,3 +613,37 @@ func TestConflictModuleStructLoader(t *testing.T) {
 		t.Errorf("unexpected output: %v", out)
 	}
 }
+
+func TestModuleLoaderOnce(t *testing.T) {
+	name := "mine"
+	b := starbox.New("test")
+	loadCnt := 0
+	loadFunc := func() (starlark.StringDict, error) {
+		loadCnt++
+		return starlark.StringDict{
+			"num": starlark.MakeInt(loadCnt * 100),
+		}, nil
+	}
+	// actually twice --- once for preload, once for lazyload
+	b.AddModuleLoader(name, loadFunc)
+	b.AddModuleLoader(name, loadFunc)
+	b.AddModuleLoader(name, loadFunc)
+	out, err := b.Run(HereDoc(`
+		r1 = num+1
+		load("mine", "num")
+		load("mine", "num")
+		r2 = num+2
+	`))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["r1"] != int64(101) {
+		t.Errorf("unexpected output r1: %v", out)
+	}
+	if out["r2"] != int64(202) {
+		t.Errorf("unexpected output r2: %v", out)
+	}
+	if loadCnt != 2 {
+		t.Errorf("unexpected load count: %d", loadCnt)
+	}
+}
