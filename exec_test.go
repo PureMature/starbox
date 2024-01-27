@@ -37,15 +37,13 @@ func TestRunTimeout(t *testing.T) {
 	// timeout
 	b := starbox.New("test")
 	b.SetModuleSet(starbox.SafeModuleSet)
-	out, err := b.RunTimeout(`sleep(1.5)`, time.Second)
-	if err == nil {
+	if out, err := b.RunTimeout(`sleep(1.5)`, time.Second); err == nil {
 		t.Errorf("expected error but not, output: %v", out)
 	}
 
 	// no timeout
 	b.Reset()
-	out, err = b.RunTimeout(`sleep(0.2)`, time.Second)
-	if err != nil {
+	if _, err := b.RunTimeout(`sleep(0.2)`, time.Second); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
@@ -330,6 +328,7 @@ func TestSetAddPrepareError(t *testing.T) {
 			},
 		},
 	}
+	// matrix of run functions
 	for _, tt := range tests {
 		t.Run("normal_"+tt.name, func(t *testing.T) {
 			b := starbox.New("test")
@@ -380,6 +379,7 @@ func TestSetAddRunError(t *testing.T) {
 			},
 		},
 	}
+	// matrix of run functions w/o pure repl
 	for _, tt := range tests {
 		t.Run("normal_"+tt.name, func(t *testing.T) {
 			b := starbox.New("test")
