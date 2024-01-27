@@ -296,7 +296,7 @@ func TestSetAddRunPanic(t *testing.T) {
 	}
 }
 
-func TestSetAddRunError(t *testing.T) {
+func TestSetAddPrepareError(t *testing.T) {
 	tests := []struct {
 		name string
 		fn   func(b *starbox.Starbox)
@@ -329,6 +329,50 @@ func TestSetAddRunError(t *testing.T) {
 				`))
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run("normal_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.Run(`z = 123`); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("timeout_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunTimeout(`z = 123`, time.Second); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("repl_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if err := b.REPL(); err == nil {
+				t.Errorf("expected error but not")
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("inspect_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunInspect(`z = 123`); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+}
+
+func TestSetAddRunError(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(b *starbox.Starbox)
+	}{
 		{
 			name: "add invalid key value",
 			fn: func(b *starbox.Starbox) {
@@ -351,6 +395,15 @@ func TestSetAddRunError(t *testing.T) {
 			b := starbox.New("test")
 			tt.fn(b)
 			if out, err := b.RunTimeout(`z = 123`, time.Second); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("inspect_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunInspect(`z = 123`); err == nil {
 				t.Errorf("expected error but not, output: %v", out)
 			}
 		})
