@@ -15,14 +15,8 @@ func (s *Starbox) Run(script string) (starlet.StringAnyMap, error) {
 	defer s.mu.Unlock()
 
 	// prepare environment
-	if !s.hasRun {
-		// for the first run
-		if err := s.prepareEnv(script); err != nil {
-			return nil, err
-		}
-	} else {
-		// for the following runs
-		s.mac.SetScript("box.star", []byte(script), s.modFS)
+	if err := s.prepareEnv(script); err != nil {
+		return nil, err
 	}
 
 	// run
@@ -37,14 +31,8 @@ func (s *Starbox) RunTimeout(script string, timeout time.Duration) (starlet.Stri
 	defer s.mu.Unlock()
 
 	// prepare environment
-	if !s.hasRun {
-		// for the first run
-		if err := s.prepareEnv(script); err != nil {
-			return nil, err
-		}
-	} else {
-		// for the following runs
-		s.mac.SetScript("box.star", []byte(script), s.modFS)
+	if err := s.prepareEnv(script); err != nil {
+		return nil, err
 	}
 
 	// run
@@ -59,10 +47,8 @@ func (s *Starbox) REPL() error {
 	defer s.mu.Unlock()
 
 	// prepare environment -- no need to set script content
-	if !s.hasRun {
-		if err := s.prepareEnv(""); err != nil {
-			return err
-		}
+	if err := s.prepareEnv(""); err != nil {
+		return err
 	}
 
 	// run
@@ -71,6 +57,11 @@ func (s *Starbox) REPL() error {
 	s.mac.REPL()
 	return nil
 }
+
+//// RunInspect executes a script and then REPL with result and returns the converted output.
+//func (s *Starbox) RunInspect(script string) (starlet.StringAnyMap, error) {
+//	// refine internal run
+//}
 
 // Reset creates an new Starlet machine and keeps the settings.
 func (s *Starbox) Reset() {
@@ -83,6 +74,12 @@ func (s *Starbox) Reset() {
 }
 
 func (s *Starbox) prepareEnv(script string) (err error) {
+	// if it's not the first run, set the script content only
+	if s.hasRun {
+		s.mac.SetScript("box.star", []byte(script), s.modFS)
+		return nil
+	}
+
 	// set custom tag and print function
 	if s.structTag != "" {
 		s.mac.SetCustomTag(s.structTag)
