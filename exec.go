@@ -58,10 +58,25 @@ func (s *Starbox) REPL() error {
 	return nil
 }
 
-//// RunInspect executes a script and then REPL with result and returns the converted output.
-//func (s *Starbox) RunInspect(script string) (starlet.StringAnyMap, error) {
-//	// refine internal run
-//}
+// RunInspect executes a script and then REPL with result and returns the converted output.
+func (s *Starbox) RunInspect(script string) (starlet.StringAnyMap, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// prepare environment
+	if err := s.prepareEnv(script); err != nil {
+		return nil, err
+	}
+
+	// run script
+	s.hasRun = true
+	s.runTimes++
+	out, err := s.mac.Run()
+
+	// repl
+	s.mac.REPL()
+	return out, err
+}
 
 // Reset creates an new Starlet machine and keeps the settings.
 func (s *Starbox) Reset() {

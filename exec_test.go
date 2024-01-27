@@ -117,6 +117,39 @@ func TestRunWithPreviousResult(t *testing.T) {
 	}
 }
 
+// TestREPL tests the following:
+// 1. Create a new Starbox instance.
+// 2. Run the REPL.
+func TestREPL(t *testing.T) {
+	b := starbox.New("test")
+	if err := b.REPL(); err != nil {
+		t.Error(err)
+	}
+}
+
+// TestRunInspect tests the following:
+// 1. Create a new Starbox instance.
+// 2. Run a script that uses the inspect function.
+// 3. Check the output.
+func TestRunInspect(t *testing.T) {
+	b := starbox.New("test")
+	out, err := b.Run(HereDoc(`
+		s = inspect(1)
+	`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := `int`; out["s"] != es {
+		t.Errorf("expect %q, got %v", es, out["s"])
+	}
+}
+
 func TestSetAddRunPanic(t *testing.T) {
 	getBox := func(t *testing.T) *starbox.Starbox {
 		b := starbox.New("test")
