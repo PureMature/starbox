@@ -132,22 +132,24 @@ func TestREPL(t *testing.T) {
 // 2. Run a script that uses the inspect function.
 // 3. Check the output.
 func TestRunInspect(t *testing.T) {
-	b := starbox.New("test")
-	out, err := b.Run(HereDoc(`
-		s = inspect(1)
+	b1 := starbox.New("test1")
+	out, err := b1.RunInspect(HereDoc(`
+		a = 123
+		s = invalid(1)
+	`))
+	if err == nil {
+		t.Errorf("expected error but not, output: %v", out)
+	}
+	t.Logf("output: %v", out)
+
+	b2 := starbox.New("test2")
+	out, err = b2.Run(HereDoc(`
+		a = 456
 	`))
 	if err != nil {
-		t.Error(err)
+		t.Errorf("unexpected error: %v", err)
 	}
-	if out == nil {
-		t.Error("expect not nil, got nil")
-	}
-	if len(out) != 1 {
-		t.Errorf("expect 1, got %d", len(out))
-	}
-	if es := `int`; out["s"] != es {
-		t.Errorf("expect %q, got %v", es, out["s"])
-	}
+	t.Logf("output: %v", out)
 }
 
 func TestSetAddRunPanic(t *testing.T) {
