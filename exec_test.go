@@ -159,24 +159,40 @@ func TestRunInspectIf(t *testing.T) {
 			return false
 		}
 	)
-	b := starbox.New("test")
-	out, err := b.RunInspectIf(HereDoc(`
+
+	{
+		b := starbox.New("test1")
+		out, err := b.RunInspectIf(HereDoc(`
 		a = 123
 		if a == 123:
 			print("hello")
 	`), noFunc)
-	if err != nil {
-		t.Errorf("unexpected error1: %v", err)
+		if err != nil {
+			t.Errorf("unexpected error1: %v", err)
+		}
+		t.Logf("output1: %v", out)
 	}
-	t.Logf("output1: %v", out)
 
-	out, err = b.RunInspectIf(HereDoc(`
-		a = 456
-	`), yesFunc)
-	if err != nil {
-		t.Errorf("unexpected error2: %v", err)
+	{
+		b := starbox.New("test2")
+		out, err := b.RunInspectIf(HereDoc(`a = 456`), yesFunc)
+		if err != nil {
+			t.Errorf("unexpected error2: %v", err)
+		}
+		t.Logf("output2: %v", out)
 	}
-	t.Logf("output2: %v", out)
+
+	{
+		b := starbox.New("test3")
+		out, err := b.RunInspect(HereDoc(`
+			a = 789
+			s = invalid(3)
+		`))
+		if err == nil {
+			t.Errorf("expected error but not, output3: %v", out)
+		}
+		t.Logf("output3: %v", out)
+	}
 }
 
 func TestSetAddRunPanic(t *testing.T) {
