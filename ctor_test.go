@@ -285,6 +285,35 @@ func TestAddKeyValues(t *testing.T) {
 	}
 }
 
+// TestAddStarlarkValues tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add key-value pairs.
+// 3. Run a script that uses the key-value pairs.
+// 4. Check the output to see if the key-value pairs are present.
+func TestAddStarlarkValues(t *testing.T) {
+	b := starbox.New("test")
+	b.AddStarlarkValues(starlark.StringDict{
+		"a": starlark.MakeInt(11),
+		"b": starlark.MakeInt(22),
+	})
+	b.AddStarlarkValues(starlark.StringDict{
+		"c": starlark.Float(33),
+	})
+	out, err := b.Run(HereDoc(`d = a + b + c`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := float64(66); out["d"] != es {
+		t.Errorf("expect %f, got %v", es, out["d"])
+	}
+}
+
 // TestAddBuiltin tests the following:
 // 1. Create a new Starbox instance.
 // 2. Add a builtin function.

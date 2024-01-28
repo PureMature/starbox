@@ -208,6 +208,15 @@ func TestSetAddRunPanic(t *testing.T) {
 			},
 		},
 		{
+			name: "add starlark values",
+			fn: func(b *starbox.Starbox) {
+				b.AddStarlarkValues(starlark.StringDict{
+					"a": starlark.MakeInt(1),
+					"b": starlark.MakeInt(2),
+				})
+			},
+		},
+		{
 			name: "add builtin",
 			fn: func(b *starbox.Starbox) {
 				b.AddBuiltin("a", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
