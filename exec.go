@@ -91,7 +91,7 @@ func (s *Starbox) Reset() {
 func (s *Starbox) prepareEnv(script string) (err error) {
 	// if it's not the first run, set the script content only
 	if s.hasRun {
-		s.mac.SetScript("box.star", []byte(script), s.modFS)
+		s.mac.SetScriptContent([]byte(script))
 		return nil
 	}
 
