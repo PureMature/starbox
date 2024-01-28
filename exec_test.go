@@ -150,6 +150,35 @@ func TestRunInspect(t *testing.T) {
 	t.Logf("output2: %v", out)
 }
 
+func TestRunInspectIf(t *testing.T) {
+	var (
+		yesFunc = func(starlet.StringAnyMap, error) bool {
+			return true
+		}
+		noFunc = func(starlet.StringAnyMap, error) bool {
+			return false
+		}
+	)
+	b := starbox.New("test")
+	out, err := b.RunInspectIf(HereDoc(`
+		a = 123
+		if a == 123:
+			print("hello")
+	`), noFunc)
+	if err != nil {
+		t.Errorf("unexpected error1: %v", err)
+	}
+	t.Logf("output1: %v", out)
+
+	out, err = b.RunInspectIf(HereDoc(`
+		a = 456
+	`), yesFunc)
+	if err != nil {
+		t.Errorf("unexpected error2: %v", err)
+	}
+	t.Logf("output2: %v", out)
+}
+
 func TestSetAddRunPanic(t *testing.T) {
 	getBox := func(t *testing.T) *starbox.Starbox {
 		b := starbox.New("test")
