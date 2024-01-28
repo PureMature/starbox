@@ -419,6 +419,15 @@ func TestSetAddPrepareError(t *testing.T) {
 			}
 		})
 	}
+	for _, tt := range tests {
+		t.Run("inspect_if_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunInspectIf(`z = 123`, func(starlet.StringAnyMap, error) bool { return true }); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
 }
 
 func TestSetAddRunError(t *testing.T) {
@@ -457,6 +466,15 @@ func TestSetAddRunError(t *testing.T) {
 			b := starbox.New("test")
 			tt.fn(b)
 			if out, err := b.RunInspect(`z = 123`); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("inspect_if_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunInspectIf(`z = 123`, func(starlet.StringAnyMap, error) bool { return true }); err == nil {
 				t.Errorf("expected error but not, output: %v", out)
 			}
 		})
