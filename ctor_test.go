@@ -8,9 +8,9 @@ import (
 
 	"bitbucket.org/ai69/amoy"
 	"github.com/1set/starlet"
+	"github.com/1set/starlet/dataconv"
 	"github.com/PureMature/starbox"
 	"go.starlark.net/starlark"
-	"go.starlark.net/starlarkstruct"
 )
 
 var (
@@ -285,6 +285,35 @@ func TestAddKeyValues(t *testing.T) {
 	}
 }
 
+// TestAddStarlarkValues tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add key-value pairs.
+// 3. Run a script that uses the key-value pairs.
+// 4. Check the output to see if the key-value pairs are present.
+func TestAddStarlarkValues(t *testing.T) {
+	b := starbox.New("test")
+	b.AddStarlarkValues(starlark.StringDict{
+		"a": starlark.MakeInt(11),
+		"b": starlark.MakeInt(22),
+	})
+	b.AddStarlarkValues(starlark.StringDict{
+		"c": starlark.Float(33),
+	})
+	out, err := b.Run(HereDoc(`d = a + b + c`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := float64(66); out["d"] != es {
+		t.Errorf("expect %f, got %v", es, out["d"])
+	}
+}
+
 // TestAddBuiltin tests the following:
 // 1. Create a new Starbox instance.
 // 2. Add a builtin function.
@@ -365,23 +394,16 @@ func TestAddModuleLoader(t *testing.T) {
 			"num": starlark.MakeInt(100),
 		}, nil
 	})
-	b.AddModuleLoader("more", func() (starlark.StringDict, error) {
-		return starlark.StringDict{
-			"less": &starlarkstruct.Module{
-				Name: "less",
-				Members: starlark.StringDict{
-					"num": starlark.MakeInt(200),
-					"plus": starlark.NewBuiltin("plus", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-						var a, b int64
-						if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
-							return nil, err
-						}
-						return starlark.MakeInt64(a + b), nil
-					}),
-				},
-			},
-		}, nil
-	})
+	b.AddModuleLoader("more", dataconv.WrapModuleData("less", starlark.StringDict{
+		"num": starlark.MakeInt(200),
+		"plus": starlark.NewBuiltin("plus", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			var a, b int64
+			if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+				return nil, err
+			}
+			return starlark.MakeInt64(a + b), nil
+		}),
+	}))
 	tests := []struct {
 		script string
 		want   int64

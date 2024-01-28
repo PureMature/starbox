@@ -9,8 +9,8 @@ import (
 
 	"bitbucket.org/ai69/amoy"
 	"github.com/1set/starlet"
+	"github.com/1set/starlet/dataconv"
 	"go.starlark.net/starlark"
-	"go.starlark.net/starlarkstruct"
 )
 
 // StarlarkFunc is a function that can be called from Starlark.
@@ -128,6 +128,24 @@ func (s *Starbox) AddKeyValues(keyValues starlet.StringAnyMap) {
 	s.globals.Merge(keyValues)
 }
 
+// AddStarlarkValues adds key-value pairs to the global environment before running, the values are already converted to Starlark values.
+// For each key-value pair, if the key already exists, it will be overwritten.
+// It panics if called after running.
+func (s *Starbox) AddStarlarkValues(keyValues starlark.StringDict) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot add key-value pairs after running")
+	}
+	if s.globals == nil {
+		s.globals = make(starlet.StringAnyMap)
+	}
+	for key, value := range keyValues {
+		s.globals[key] = value
+	}
+}
+
 // AddBuiltin adds a builtin function with name to the global environment before running.
 // If the name already exists, it will be overwritten.
 // It panics if called after running.
@@ -187,12 +205,7 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
 	}
-	s.loadMods[moduleName] = func() (starlark.StringDict, error) {
-		sm := starlarkstruct.Module{Name: moduleName, Members: moduleData}
-		return starlark.StringDict{
-			moduleName: &sm,
-		}, nil
-	}
+	s.loadMods[moduleName] = dataconv.WrapModuleData(moduleName, moduleData)
 }
 
 // AddModuleScript creates a module with given module script in virtual filesystem, and adds it to the preload and lazyload registry.

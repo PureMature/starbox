@@ -150,6 +150,51 @@ func TestRunInspect(t *testing.T) {
 	t.Logf("output2: %v", out)
 }
 
+func TestRunInspectIf(t *testing.T) {
+	var (
+		yesFunc = func(starlet.StringAnyMap, error) bool {
+			return true
+		}
+		noFunc = func(starlet.StringAnyMap, error) bool {
+			return false
+		}
+	)
+
+	{
+		b := starbox.New("test1")
+		out, err := b.RunInspectIf(HereDoc(`
+		a = 123
+		if a == 123:
+			print("hello")
+	`), noFunc)
+		if err != nil {
+			t.Errorf("unexpected error1: %v", err)
+		}
+		t.Logf("output1: %v", out)
+	}
+
+	{
+		b := starbox.New("test2")
+		out, err := b.RunInspectIf(HereDoc(`a = 456`), yesFunc)
+		if err != nil {
+			t.Errorf("unexpected error2: %v", err)
+		}
+		t.Logf("output2: %v", out)
+	}
+
+	{
+		b := starbox.New("test3")
+		out, err := b.RunInspect(HereDoc(`
+			a = 789
+			s = invalid(3)
+		`))
+		if err == nil {
+			t.Errorf("expected error but not, output3: %v", out)
+		}
+		t.Logf("output3: %v", out)
+	}
+}
+
 func TestSetAddRunPanic(t *testing.T) {
 	getBox := func(t *testing.T) *starbox.Starbox {
 		b := starbox.New("test")
@@ -204,6 +249,15 @@ func TestSetAddRunPanic(t *testing.T) {
 				b.AddKeyValues(starlet.StringAnyMap{
 					"a": 1,
 					"b": 2,
+				})
+			},
+		},
+		{
+			name: "add starlark values",
+			fn: func(b *starbox.Starbox) {
+				b.AddStarlarkValues(starlark.StringDict{
+					"a": starlark.MakeInt(1),
+					"b": starlark.MakeInt(2),
 				})
 			},
 		},
@@ -365,6 +419,15 @@ func TestSetAddPrepareError(t *testing.T) {
 			}
 		})
 	}
+	for _, tt := range tests {
+		t.Run("inspect_if_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunInspectIf(`z = 123`, func(starlet.StringAnyMap, error) bool { return true }); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
 }
 
 func TestSetAddRunError(t *testing.T) {
@@ -403,6 +466,15 @@ func TestSetAddRunError(t *testing.T) {
 			b := starbox.New("test")
 			tt.fn(b)
 			if out, err := b.RunInspect(`z = 123`); err == nil {
+				t.Errorf("expected error but not, output: %v", out)
+			}
+		})
+	}
+	for _, tt := range tests {
+		t.Run("inspect_if_"+tt.name, func(t *testing.T) {
+			b := starbox.New("test")
+			tt.fn(b)
+			if out, err := b.RunInspectIf(`z = 123`, func(starlet.StringAnyMap, error) bool { return true }); err == nil {
 				t.Errorf("expected error but not, output: %v", out)
 			}
 		})
@@ -586,6 +658,16 @@ func TestConflictModuleStructLoader(t *testing.T) {
 	name := "base64"
 	b := starbox.New("test")
 	b.AddNamedModules(name)
+	b.AddModuleData(name, starlark.StringDict{
+		"shift": starlark.NewBuiltin("shift", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			var a, b int64
+			if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+				return nil, err
+			}
+			return starlark.MakeInt64(a << b).Add(starlark.MakeInt(5)), nil
+		}),
+		"num": starlark.MakeInt(100),
+	})
 	b.AddModuleLoader(name, func() (starlark.StringDict, error) {
 		return starlark.StringDict{
 			name: &starlarkstruct.Module{

@@ -78,6 +78,32 @@ func (s *Starbox) RunInspect(script string) (starlet.StringAnyMap, error) {
 	return out, err
 }
 
+// InspectCondFunc is a function type for inspecting the converted output of Run*() and decide whether to continue.
+type InspectCondFunc func(starlet.StringAnyMap, error) bool
+
+// RunInspectIf executes a script and then REPL with result and returns the converted output, if the condition is met.
+// The condition function is called with the converted output and the error from Run*(), and returns true if REPL is needed.
+func (s *Starbox) RunInspectIf(script string, cond InspectCondFunc) (starlet.StringAnyMap, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// prepare environment
+	if err := s.prepareEnv(script); err != nil {
+		return nil, err
+	}
+
+	// run script
+	s.hasRun = true
+	s.runTimes++
+	out, err := s.mac.Run()
+
+	// repl
+	if cond(out, err) {
+		s.mac.REPL()
+	}
+	return out, err
+}
+
 // Reset creates an new Starlet machine and keeps the settings.
 func (s *Starbox) Reset() {
 	s.mu.Lock()
@@ -91,7 +117,7 @@ func (s *Starbox) Reset() {
 func (s *Starbox) prepareEnv(script string) (err error) {
 	// if it's not the first run, set the script content only
 	if s.hasRun {
-		s.mac.SetScript("box.star", []byte(script), s.modFS)
+		s.mac.SetScriptContent([]byte(script))
 		return nil
 	}
 
