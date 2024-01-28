@@ -586,6 +586,16 @@ func TestConflictModuleStructLoader(t *testing.T) {
 	name := "base64"
 	b := starbox.New("test")
 	b.AddNamedModules(name)
+	b.AddModuleData(name, starlark.StringDict{
+		"shift": starlark.NewBuiltin("shift", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			var a, b int64
+			if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+				return nil, err
+			}
+			return starlark.MakeInt64(a << b).Add(starlark.MakeInt(5)), nil
+		}),
+		"num": starlark.MakeInt(100),
+	})
 	b.AddModuleLoader(name, func() (starlark.StringDict, error) {
 		return starlark.StringDict{
 			name: &starlarkstruct.Module{

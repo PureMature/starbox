@@ -9,8 +9,8 @@ import (
 
 	"bitbucket.org/ai69/amoy"
 	"github.com/1set/starlet"
+	"github.com/1set/starlet/dataconv"
 	"go.starlark.net/starlark"
-	"go.starlark.net/starlarkstruct"
 )
 
 // StarlarkFunc is a function that can be called from Starlark.
@@ -187,12 +187,7 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
 	}
-	s.loadMods[moduleName] = func() (starlark.StringDict, error) {
-		sm := starlarkstruct.Module{Name: moduleName, Members: moduleData}
-		return starlark.StringDict{
-			moduleName: &sm,
-		}, nil
-	}
+	s.loadMods[moduleName] = dataconv.WrapModuleData(moduleName, moduleData)
 }
 
 // AddModuleScript creates a module with given module script in virtual filesystem, and adds it to the preload and lazyload registry.

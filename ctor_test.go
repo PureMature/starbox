@@ -8,9 +8,9 @@ import (
 
 	"bitbucket.org/ai69/amoy"
 	"github.com/1set/starlet"
+	"github.com/1set/starlet/dataconv"
 	"github.com/PureMature/starbox"
 	"go.starlark.net/starlark"
-	"go.starlark.net/starlarkstruct"
 )
 
 var (
@@ -365,23 +365,16 @@ func TestAddModuleLoader(t *testing.T) {
 			"num": starlark.MakeInt(100),
 		}, nil
 	})
-	b.AddModuleLoader("more", func() (starlark.StringDict, error) {
-		return starlark.StringDict{
-			"less": &starlarkstruct.Module{
-				Name: "less",
-				Members: starlark.StringDict{
-					"num": starlark.MakeInt(200),
-					"plus": starlark.NewBuiltin("plus", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-						var a, b int64
-						if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
-							return nil, err
-						}
-						return starlark.MakeInt64(a + b), nil
-					}),
-				},
-			},
-		}, nil
-	})
+	b.AddModuleLoader("more", dataconv.WrapModuleData("less", starlark.StringDict{
+		"num": starlark.MakeInt(200),
+		"plus": starlark.NewBuiltin("plus", func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			var a, b int64
+			if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+				return nil, err
+			}
+			return starlark.MakeInt64(a + b), nil
+		}),
+	}))
 	tests := []struct {
 		script string
 		want   int64
