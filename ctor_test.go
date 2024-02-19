@@ -10,6 +10,7 @@ import (
 	"github.com/1set/starlet"
 	"github.com/1set/starlet/dataconv"
 	"github.com/PureMature/starbox"
+	"github.com/psanford/memfs"
 	"go.starlark.net/starlark"
 )
 
@@ -148,6 +149,50 @@ func TestSetPrintFunc(t *testing.T) {
 	expected := "Aloha!Mahalo!"
 	if actual != expected {
 		t.Errorf("expect %q, got %v", expected, actual)
+	}
+}
+
+// TestSetFS tests the following:
+// 1. Create a virtual filesystem.
+// 2. Create a new Starbox instance.
+// 3. Set the virtual filesystem, and add a module script.
+// 4. Run a script that uses the virtual filesystem.
+// 5. Check the output -- the virtual filesystem should override the module script.
+func TestSetFS(t *testing.T) {
+	// create a virtual filesystem
+	s1 := HereDoc(`
+		a = 10
+		b = 20
+	`)
+	s2 := HereDoc(`
+		a = 100
+		b = 200
+	`)
+	mn := `test.star`
+	fs := memfs.New()
+	fs.WriteFile(mn, []byte(s1), 0644)
+
+	// create a new Starbox instance
+	b := starbox.New("test")
+	b.SetFS(fs)
+	b.AddModuleScript(mn, s2)
+
+	// run a script that uses the virtual filesystem
+	out, err := b.Run(HereDoc(`
+		load("test.star", "a", "b")
+		c = a + b
+	`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := int64(30); out["c"] != es {
+		t.Errorf("expect %d, got %v", es, out["c"])
 	}
 }
 
