@@ -1,7 +1,6 @@
 package starbox
 
 import (
-	"io/fs"
 	"sort"
 	"time"
 
@@ -145,8 +144,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 	}
 
 	// prepare script modules
-	var modFS fs.FS
-	if len(s.scriptMods) > 0 {
+	if len(s.scriptMods) > 0 && s.modFS == nil {
 		rootFS := memfs.New()
 		for fp, scr := range s.scriptMods {
 			// TODO: support directory/file.star later
@@ -154,12 +152,11 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 				return err
 			}
 		}
-		modFS = rootFS
 		s.modFS = rootFS
 	}
 
 	// set script
-	s.mac.SetScript("box.star", []byte(script), modFS)
+	s.mac.SetScript("box.star", []byte(script), s.modFS)
 
 	// all is done
 	return nil
