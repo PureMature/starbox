@@ -84,6 +84,19 @@ func (s *Starbox) SetPrintFunc(printFunc starlet.PrintFunc) {
 	s.printFunc = printFunc
 }
 
+// SetFS sets the virtual filesystem for module scripts.
+// If it's not nil, it'll override all the scripts added by AddModuleScript().
+// It panics if called after running.
+func (s *Starbox) SetFS(hfs fs.FS) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot set filesystem after running")
+	}
+	s.modFS = hfs
+}
+
 // SetModuleSet sets the module set to be loaded before running.
 // It panics if called after running.
 func (s *Starbox) SetModuleSet(modSet ModuleSetName) {

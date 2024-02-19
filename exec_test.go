@@ -232,6 +232,12 @@ func TestSetAddRunPanic(t *testing.T) {
 			},
 		},
 		{
+			name: "set fs",
+			fn: func(b *starbox.Starbox) {
+				b.SetFS(nil)
+			},
+		},
+		{
 			name: "set module set",
 			fn: func(b *starbox.Starbox) {
 				b.SetModuleSet(starbox.SafeModuleSet)
