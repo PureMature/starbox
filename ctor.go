@@ -251,8 +251,8 @@ func NewMemory() *dataconv.SharedDict {
 	return dataconv.NewNamedSharedDict(memoryTypeName)
 }
 
-// AddMemory adds a shared dictionary to the global environment before running.
-func (s *Starbox) AddMemory(name string, memory *dataconv.SharedDict) {
+// AttachMemory adds a shared dictionary to the global environment before running.
+func (s *Starbox) AttachMemory(name string, memory *dataconv.SharedDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -265,8 +265,8 @@ func (s *Starbox) AddMemory(name string, memory *dataconv.SharedDict) {
 	s.globals[name] = memory
 }
 
-// NewMemory creates a new shared dictionary for la mémoire collective with the given name, and adds it to the global environment before running.
-func (s *Starbox) NewMemory(name string) *dataconv.SharedDict {
+// CreateMemory creates a new shared dictionary for la mémoire collective with the given name, and adds it to the global environment before running.
+func (s *Starbox) CreateMemory(name string) *dataconv.SharedDict {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

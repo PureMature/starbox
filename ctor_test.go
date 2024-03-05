@@ -589,3 +589,91 @@ func TestAddModuleScript(t *testing.T) {
 		})
 	}
 }
+
+// TestCollectiveMemory tests the following:
+// 1. Create a new Starbox instance.
+// 2. Created a new collective memory attached to the instance.
+// 3. Run script that uses the collective memory.
+// 4. Check the output to see if the collective memory works.
+// 5. Create another Starbox instance.
+// 6. Attach the same collective memory to the new instance.
+// 7. Run another script that uses the collective memory.
+// 8. Check the output to see if the collective memory persists.
+func TestCollectiveMemory(t *testing.T) {
+	// create a new Starbox instance: b1
+	b1 := starbox.New("test1")
+	mem := b1.CreateMemory("share")
+	s1 := HereDoc(`
+		a = 10
+		b = 20
+		c = a * b
+		share["v"] = c
+	`)
+	res, err := b1.Run(s1)
+	if err != nil {
+		t.Errorf("b1: expect nil error, got %v", err)
+		return
+	}
+	if res == nil {
+		t.Errorf("b1: expect not nil res, got nil")
+		return
+	}
+	// check memory:v
+	av, ok, err := mem.Get(starlark.String("v"))
+	if err != nil {
+		t.Errorf("b1: expect nil error for memory:v, got %v", err)
+		return
+	}
+	if ev := starlark.MakeInt(200); av != ev || !ok {
+		t.Errorf("b1: expect v=%v, got %v", ev, av)
+		return
+	}
+	t.Logf("b1: %v -- %v", res, mem)
+
+	// create a new Starbox instance: b2
+	b2 := starbox.New("test2")
+	b2.AttachMemory("history", mem)
+	s2 := HereDoc(`
+		d = history["v"]
+		e = d << 2
+		history["v"] = e + 1
+		history["w"] = "Aloha!"
+	`)
+	res, err = b2.Run(s2)
+	if err != nil {
+		t.Errorf("b2: expect nil error, got %v", err)
+		return
+	}
+	if res == nil {
+		t.Errorf("b2: expect not nil res, got nil")
+		return
+	}
+	if ev := int64(200); res["d"] != ev {
+		t.Errorf("b2: expect d=%v, got %v", ev, res["d"])
+		return
+	}
+	if ev := int64(800); res["e"] != ev {
+		t.Errorf("b2: expect e=%v, got %v", ev, res["v"])
+		return
+	}
+	// check memory:v
+	av, ok, err = mem.Get(starlark.String("v"))
+	if err != nil {
+		t.Errorf("b2: expect nil error for memory:v, got %v", err)
+		return
+	}
+	if ev := starlark.MakeInt(801); av != ev || !ok {
+		t.Errorf("b2: expect v=%v, got %v", ev, av)
+		return
+	}
+	// check memory:w
+	av, ok, err = mem.Get(starlark.String("w"))
+	if err != nil {
+		t.Errorf("b2: expect nil error for memory:w, got %v", err)
+		return
+	}
+	if ev := starlark.String("Aloha!"); av != ev || !ok {
+		t.Errorf("b2: expect w=%v, got %v", ev, av)
+		return
+	}
+}
