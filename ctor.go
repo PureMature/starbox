@@ -41,6 +41,7 @@ func New(name string) *Starbox {
 func newStarMachine(name string) *starlet.Machine {
 	m := starlet.NewDefault()
 	m.EnableGlobalReassign()
+	m.SetScriptCacheEnabled(true)
 	// m.SetInputConversionEnabled(false)
 	// m.SetOutputConversionEnabled(true)
 	m.SetPrintFunc(func(thread *starlark.Thread, msg string) {
@@ -239,4 +240,43 @@ func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 		name += ".star"
 	}
 	s.scriptMods[name] = moduleScript
+}
+
+const (
+	memoryTypeName = "collective_memory"
+)
+
+// NewMemory creates a new shared dictionary for la mémoire collective.
+func NewMemory() *dataconv.SharedDict {
+	return dataconv.NewNamedSharedDict(memoryTypeName)
+}
+
+// AttachMemory adds a shared dictionary to the global environment before running.
+func (s *Starbox) AttachMemory(name string, memory *dataconv.SharedDict) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot add memory after running")
+	}
+	if s.globals == nil {
+		s.globals = make(starlet.StringAnyMap)
+	}
+	s.globals[name] = memory
+}
+
+// CreateMemory creates a new shared dictionary for la mémoire collective with the given name, and adds it to the global environment before running.
+func (s *Starbox) CreateMemory(name string) *dataconv.SharedDict {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot add memory after running")
+	}
+	if s.globals == nil {
+		s.globals = make(starlet.StringAnyMap)
+	}
+	memory := dataconv.NewNamedSharedDict(memoryTypeName)
+	s.globals[name] = memory
+	return memory
 }

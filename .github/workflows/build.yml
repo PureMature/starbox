@@ -30,8 +30,9 @@ jobs:
         go-version: [
           1.18.10,
           1.19.13,
-          1.20.13,
-          1.21.6,
+          1.20.14,
+          1.21.7,
+          1.22.0,
         ]
     permissions:
       contents: read
@@ -52,6 +53,7 @@ jobs:
       - name: Test
         run: |
           go test -v -race -cover -covermode=atomic -coverprofile=coverage.txt -count 1 ./...
+          go test -parallel=4 -run="none" -benchtime="2s" -benchmem -bench=.
       - name: Upload Coverage Reports to Codecov
         if: ${{ fromJSON(env.CI_REPORT) }}
         uses: codecov/codecov-action@v3

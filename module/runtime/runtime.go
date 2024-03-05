@@ -1,4 +1,4 @@
-// Package runtime implements the Starlark module for runtime information.
+// Package runtime implements the Starlark module for runtime information. Works as an example for how to implement a module.
 package runtime
 
 import (

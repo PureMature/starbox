@@ -57,6 +57,7 @@ func TestRunTwice(t *testing.T) {
 	if out["a"] != int64(10) {
 		t.Errorf("unexpected output: %v", out)
 	}
+	t.Logf("raw machine a: %v", b.GetMachine())
 
 	out, err = b.Run(`b = a << 2`)
 	if err != nil {
@@ -65,6 +66,7 @@ func TestRunTwice(t *testing.T) {
 	if out["b"] != int64(40) {
 		t.Errorf("unexpected output: %v", out)
 	}
+	t.Logf("raw machine b: %v", b.GetMachine())
 }
 
 func TestRunTimeoutTwice(t *testing.T) {
@@ -327,6 +329,19 @@ func TestSetAddRunPanic(t *testing.T) {
 					a = encode("hello world")
 					print(a, base64.encode("Aloha!"))
 				`))
+			},
+		},
+		{
+			name: "create memory",
+			fn: func(b *starbox.Starbox) {
+				b.CreateMemory("test1")
+			},
+		},
+		{
+			name: "attach memory",
+			fn: func(b *starbox.Starbox) {
+				m := starbox.NewMemory()
+				b.AttachMemory("test2", m)
 			},
 		},
 	}
@@ -733,5 +748,51 @@ func TestModuleLoaderOnce(t *testing.T) {
 	}
 	if loadCnt != 2 {
 		t.Errorf("unexpected load count: %d", loadCnt)
+	}
+}
+
+func BenchmarkRunBox(b *testing.B) {
+	s := HereDoc(`
+		a = 10
+		b = 20
+		c = 30
+		def mul(*args):
+			v = 1
+			for a in args:
+				v *= a
+			return v
+		d = mul(a, b, c)
+	`)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		box := starbox.New("test")
+		_, err := box.Run(s)
+		if err != nil {
+			b.Errorf("unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkRunScript(b *testing.B) {
+	s := HereDoc(`
+		a = 10
+		b = 20
+		c = 30
+		def mul(*args):
+			v = 1
+			for a in args:
+				v *= a
+			return v
+		d = mul(a, b, c)
+	`)
+	box := starbox.New("test")
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := box.Run(s)
+		if err != nil {
+			b.Errorf("unexpected error: %v", err)
+		}
 	}
 }
