@@ -24,9 +24,9 @@ const (
 var (
 	moduleSets = map[ModuleSetName][]string{
 		EmptyModuleSet:   {},
-		SafeModuleSet:    {"base64", "go_idiomatic", "hashlib", "json", "math", "random", "re", "struct", "time"},
-		NetworkModuleSet: {"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time"},
-		FullModuleSet:    {"base64", "go_idiomatic", "hashlib", "http", "json", "math", "random", "re", "struct", "time", lrt.ModuleName},
+		SafeModuleSet:    {"base64", "go_idiomatic", "hashlib", "json", "log", "math", "random", "re", "string", "struct", "time"},
+		NetworkModuleSet: {"base64", "go_idiomatic", "hashlib", "http", "json", "log", "math", "random", "re", "string", "struct", "time"},
+		FullModuleSet:    {"base64", "file", "go_idiomatic", "hashlib", "http", "json", "log", "math", "random", "re", "runtime", "string", "struct", "time"},
 	}
 	localModuleLoaders = starlet.ModuleLoaderMap{
 		lrt.ModuleName: lrt.LoadModule,
