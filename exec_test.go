@@ -331,6 +331,19 @@ func TestSetAddRunPanic(t *testing.T) {
 				`))
 			},
 		},
+		{
+			name: "create memory",
+			fn: func(b *starbox.Starbox) {
+				b.CreateMemory("test1")
+			},
+		},
+		{
+			name: "attach memory",
+			fn: func(b *starbox.Starbox) {
+				m := starbox.NewMemory()
+				b.AttachMemory("test2", m)
+			},
+		},
 	}
 
 	for _, tt := range tests {

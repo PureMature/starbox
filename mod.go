@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/1set/starlet"
-	lrt "github.com/PureMature/starbox/module/runtime"
+	// lrt "github.com/PureMature/starbox/module/runtime"
 )
 
 // ModuleSetName defines the name of a module set.
@@ -26,10 +26,10 @@ var (
 		EmptyModuleSet:   {},
 		SafeModuleSet:    {"base64", "go_idiomatic", "hashlib", "json", "log", "math", "random", "re", "string", "struct", "time"},
 		NetworkModuleSet: {"base64", "go_idiomatic", "hashlib", "http", "json", "log", "math", "random", "re", "string", "struct", "time"},
-		FullModuleSet:    {"base64", "file", "go_idiomatic", "hashlib", "http", "json", "log", "math", "random", "re", "runtime", "string", "struct", "time"},
+		FullModuleSet:    {"base64", "file", "go_idiomatic", "hashlib", "http", "json", "log", "math", "random", "re", "runtime", "string", "struct", "time" /* lrt.ModuleName */},
 	}
 	localModuleLoaders = starlet.ModuleLoaderMap{
-		lrt.ModuleName: lrt.LoadModule,
+		// lrt.ModuleName: lrt.LoadModule,
 	}
 )
 
