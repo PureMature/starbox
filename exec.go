@@ -121,7 +121,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 		// generate script name from MD5 hash or random string as fallback
 		var fn string
 		if fn, _ = yhash.StringMD5(script); fn == "" {
-			if fn, _ = yrand.StringBase36(8); fn == "" {
+			if fn, _ = yrand.StringBase36(12); fn == "" {
 				fn = "box"
 			}
 		}

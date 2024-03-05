@@ -750,3 +750,49 @@ func TestModuleLoaderOnce(t *testing.T) {
 		t.Errorf("unexpected load count: %d", loadCnt)
 	}
 }
+
+func BenchmarkRunBox(b *testing.B) {
+	s := HereDoc(`
+		a = 10
+		b = 20
+		c = 30
+		def mul(*args):
+			v = 1
+			for a in args:
+				v *= a
+			return v
+		d = mul(a, b, c)
+	`)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		box := starbox.New("test")
+		_, err := box.Run(s)
+		if err != nil {
+			b.Errorf("unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkRunScript(b *testing.B) {
+	s := HereDoc(`
+		a = 10
+		b = 20
+		c = 30
+		def mul(*args):
+			v = 1
+			for a in args:
+				v *= a
+			return v
+		d = mul(a, b, c)
+	`)
+	box := starbox.New("test")
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := box.Run(s)
+		if err != nil {
+			b.Errorf("unexpected error: %v", err)
+		}
+	}
+}
