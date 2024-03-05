@@ -146,7 +146,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 	s.mac.SetGlobals(s.globals)
 
 	// extract module loaders
-	preMods, lazyMods, err := s.extractModuleLoaders()
+	preMods, lazyMods, err := s.extractModLoads()
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 	return nil
 }
 
-func (s *Starbox) extractModuleLoaders() (preMods starlet.ModuleLoaderList, lazyMods starlet.ModuleLoaderMap, err error) {
+func (s *Starbox) extractModLoads() (preMods starlet.ModuleLoaderList, lazyMods starlet.ModuleLoaderMap, err error) {
 	// get modules by name: local module set + individual names for starlet
 	var modNames []string
 	if modNames, err = getModuleSet(s.modSet); err != nil {
