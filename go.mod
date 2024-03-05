@@ -5,7 +5,6 @@ go 1.18
 require (
 	bitbucket.org/ai69/amoy v0.2.3
 	bitbucket.org/neiku/hlog v0.1.2
-	github.com/1set/gut v0.0.0-20201117175203-a82363231997
 	github.com/1set/starlet v0.0.10
 	github.com/psanford/memfs v0.0.0-20230130182539-4dbf7e3e865e
 	go.starlark.net v0.0.0-20231121155337-90ade8b19d09
@@ -14,6 +13,7 @@ require (
 
 require (
 	bitbucket.org/creachadair/shell v0.0.7 // indirect
+	github.com/1set/gut v0.0.0-20201117175203-a82363231997 // indirect
 	github.com/1set/starlight v0.0.8 // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/aymanbagabas/go-osc52 v1.0.3 // indirect
