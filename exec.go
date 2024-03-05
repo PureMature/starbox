@@ -4,6 +4,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/1set/gut/yhash"
+	"github.com/1set/gut/yrand"
 	"github.com/1set/starlet"
 	"github.com/psanford/memfs"
 )
@@ -114,9 +116,21 @@ func (s *Starbox) Reset() {
 }
 
 func (s *Starbox) prepareEnv(script string) (err error) {
+	// set script name and content
+	setScriptContent := func(c string) {
+		// generate script name from MD5 hash or random string as fallback
+		var fn string
+		if fn, _ = yhash.StringMD5(script); fn == "" {
+			if fn, _ = yrand.StringBase36(8); fn == "" {
+				fn = "box"
+			}
+		}
+		s.mac.SetScript(fn+".star", []byte(c), s.modFS)
+	}
+
 	// if it's not the first run, set the script content only
 	if s.hasRun {
-		s.mac.SetScriptContent([]byte(script))
+		setScriptContent(script)
 		return nil
 	}
 
@@ -156,7 +170,7 @@ func (s *Starbox) prepareEnv(script string) (err error) {
 	}
 
 	// set script
-	s.mac.SetScript("box.star", []byte(script), s.modFS)
+	setScriptContent(script)
 
 	// all is done
 	return nil

@@ -41,6 +41,7 @@ func New(name string) *Starbox {
 func newStarMachine(name string) *starlet.Machine {
 	m := starlet.NewDefault()
 	m.EnableGlobalReassign()
+	m.SetScriptCacheEnabled(true)
 	// m.SetInputConversionEnabled(false)
 	// m.SetOutputConversionEnabled(true)
 	m.SetPrintFunc(func(thread *starlark.Thread, msg string) {

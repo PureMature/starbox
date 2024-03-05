@@ -57,6 +57,7 @@ func TestRunTwice(t *testing.T) {
 	if out["a"] != int64(10) {
 		t.Errorf("unexpected output: %v", out)
 	}
+	t.Logf("raw machine a: %v", b.GetMachine())
 
 	out, err = b.Run(`b = a << 2`)
 	if err != nil {
@@ -65,6 +66,7 @@ func TestRunTwice(t *testing.T) {
 	if out["b"] != int64(40) {
 		t.Errorf("unexpected output: %v", out)
 	}
+	t.Logf("raw machine b: %v", b.GetMachine())
 }
 
 func TestRunTimeoutTwice(t *testing.T) {
