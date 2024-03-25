@@ -126,6 +126,22 @@ func (s *Starbox) AddKeyValue(key string, value interface{}) {
 	s.globals[key] = value
 }
 
+// AddKeyStarlarkValue adds a key-value pair to the global environment before running, the value is a Starlark value.
+// If the key already exists, it will be overwritten.
+// It panics if called after running.
+func (s *Starbox) AddKeyStarlarkValue(key string, value starlark.Value) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot add key-value pair after running")
+	}
+	if s.globals == nil {
+		s.globals = make(starlet.StringAnyMap)
+	}
+	s.globals[key] = value
+}
+
 // AddKeyValues adds key-value pairs to the global environment before running. Usually for output of Run()*.
 // For each key-value pair, if the key already exists, it will be overwritten.
 // It panics if called after running.

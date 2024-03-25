@@ -252,6 +252,12 @@ func TestSetAddRunPanic(t *testing.T) {
 			},
 		},
 		{
+			name: "add key starlark value",
+			fn: func(b *starbox.Starbox) {
+				b.AddKeyStarlarkValue("a", starlark.MakeInt(100))
+			},
+		},
+		{
 			name: "add key values",
 			fn: func(b *starbox.Starbox) {
 				b.AddKeyValues(starlet.StringAnyMap{
@@ -506,7 +512,7 @@ func TestOverrideKeyValue(t *testing.T) {
 	b := starbox.New("test")
 	b.AddKeyValue("a", 1)
 	b.AddKeyValue("a", 20)
-	b.AddKeyValue("a", 300)
+	b.AddKeyStarlarkValue("a", starlark.MakeInt(300))
 	out, err := b.Run(`res = a`)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
