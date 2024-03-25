@@ -3,6 +3,7 @@ package starbox
 import (
 	"fmt"
 	"io/fs"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"bitbucket.org/ai69/amoy"
 	"github.com/1set/starlet"
 	"github.com/1set/starlet/dataconv"
+	libhttp "github.com/1set/starlet/lib/http"
 	"go.starlark.net/starlark"
 )
 
@@ -314,6 +316,27 @@ func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 		name += ".star"
 	}
 	s.scriptMods[name] = moduleScript
+}
+
+// AddHTTPContext adds HTTP request and response data wrapper to the global environment before running.
+// It takes an HTTP request and returns the response data wrapper for setting response headers and body.
+// It panics if called after running.
+func (s *Starbox) AddHTTPContext(req *http.Request) *libhttp.ServerResponse {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot add HTTP context after running")
+	}
+	if s.globals == nil {
+		s.globals = make(starlet.StringAnyMap)
+	}
+
+	// add request and response to globals
+	s.globals["request"] = libhttp.ConvertServerRequest(req)
+	resp := libhttp.NewServerResponse()
+	s.globals["response"] = resp.Struct()
+	return resp
 }
 
 const (
