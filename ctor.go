@@ -238,6 +238,22 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 	s.loadMods[moduleName] = dataconv.WrapModuleData(moduleName, moduleData)
 }
 
+// AddStructData creates a module for the given struct data along with a module loader, and adds it to the preload and lazyload registry.
+// The given struct data can be accessed in script via load("struct_name", "key1") or struct_name.key1.
+// It panics if called after running.
+func (s *Starbox) AddStructData(structName string, structData starlark.StringDict) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot add struct data after running")
+	}
+	if s.loadMods == nil {
+		s.loadMods = make(map[string]starlet.ModuleLoader)
+	}
+	s.loadMods[structName] = dataconv.WrapStructData(structName, structData)
+}
+
 // AddModuleScript creates a module with given module script in virtual filesystem, and adds it to the preload and lazyload registry.
 // The given module script can be accessed in script via load("module_name", "key1") or load("module_name.star", "key1") if module name has no ".star" suffix.
 // It panics if called after running.
