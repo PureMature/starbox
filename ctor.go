@@ -222,6 +222,27 @@ func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.Module
 	s.loadMods[moduleName] = moduleLoader
 }
 
+// AddModuleFunctions adds a module with the given module functions along with a module loader, and adds it to the preload and lazyload registry.
+// The given module function can be accessed in script via load("module_name", "func1") or module_name.func1.
+// It works like AddModuleData() but allows only functions as values.
+// It panics if called after running.
+func (s *Starbox) AddModuleFunctions(name string, funcs map[string]StarlarkFunc) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot add module function after running")
+	}
+	if s.loadMods == nil {
+		s.loadMods = make(map[string]starlet.ModuleLoader)
+	}
+	sfd := starlark.StringDict{}
+	for fn, fv := range funcs {
+		sfd[fn] = starlark.NewBuiltin(name+"."+fn, fv)
+	}
+	s.loadMods[name] = dataconv.WrapModuleData(name, sfd)
+}
+
 // AddModuleData creates a module for the given module data along with a module loader, and adds it to the preload and lazyload registry.
 // The given module data can be accessed in script via load("module_name", "key1") or module_name.key1.
 // It panics if called after running.
@@ -236,6 +257,27 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 		s.loadMods = make(map[string]starlet.ModuleLoader)
 	}
 	s.loadMods[moduleName] = dataconv.WrapModuleData(moduleName, moduleData)
+}
+
+// AddStructFunctions adds a module with the given struct functions along with a module loader, and adds it to the preload and lazyload registry.
+// The given struct function can be accessed in script via load("struct_name", "func1") or struct_name.func1.
+// It works like AddStructData() but allows only functions as values.
+// It panics if called after running.
+func (s *Starbox) AddStructFunctions(name string, funcs map[string]StarlarkFunc) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.hasRun {
+		log.DPanic("cannot add struct function after running")
+	}
+	if s.loadMods == nil {
+		s.loadMods = make(map[string]starlet.ModuleLoader)
+	}
+	sfd := starlark.StringDict{}
+	for fn, fv := range funcs {
+		sfd[fn] = starlark.NewBuiltin(name+"."+fn, fv)
+	}
+	s.loadMods[name] = dataconv.WrapStructData(name, sfd)
 }
 
 // AddStructData creates a module for the given struct data along with a module loader, and adds it to the preload and lazyload registry.
