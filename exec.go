@@ -19,8 +19,8 @@ func (s *Starbox) Run(script string) (starlet.StringAnyMap, error) {
 	}
 
 	// run
-	s.hasRun = true
-	s.runTimes++
+	s.hasExec = true
+	s.execTimes++
 	return s.mac.Run()
 }
 
@@ -35,8 +35,8 @@ func (s *Starbox) RunTimeout(script string, timeout time.Duration) (starlet.Stri
 	}
 
 	// run
-	s.hasRun = true
-	s.runTimes++
+	s.hasExec = true
+	s.execTimes++
 	return s.mac.RunWithTimeout(timeout, nil)
 }
 
@@ -51,8 +51,8 @@ func (s *Starbox) REPL() error {
 	}
 
 	// run
-	s.hasRun = true
-	s.runTimes++
+	s.hasExec = true
+	s.execTimes++
 	s.mac.REPL()
 	return nil
 }
@@ -68,8 +68,8 @@ func (s *Starbox) RunInspect(script string) (starlet.StringAnyMap, error) {
 	}
 
 	// run script
-	s.hasRun = true
-	s.runTimes++
+	s.hasExec = true
+	s.execTimes++
 	out, err := s.mac.Run()
 
 	// repl
@@ -92,8 +92,8 @@ func (s *Starbox) RunInspectIf(script string, cond InspectCondFunc) (starlet.Str
 	}
 
 	// run script
-	s.hasRun = true
-	s.runTimes++
+	s.hasExec = true
+	s.execTimes++
 	out, err := s.mac.Run()
 
 	// repl
@@ -110,12 +110,12 @@ func (s *Starbox) Reset() {
 
 	//s.mac.Reset()
 	s.mac = newStarMachine(s.name)
-	s.hasRun = false
+	s.hasExec = false
 }
 
 func (s *Starbox) prepareEnv(script string) (err error) {
 	// if it's not the first run, set the script content only
-	if s.hasRun {
+	if s.hasExec {
 		s.mac.SetScriptContent([]byte(script))
 		return nil
 	}

@@ -329,6 +329,30 @@ func TestAddKeyValue(t *testing.T) {
 	}
 }
 
+// TestAddKeyStarlarkValue tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add a key-Starlark value pair.
+// 3. Run a script that uses the key-Starlark value pair.
+// 4. Check the output to see if the key-Starlark value pair is present.
+func TestAddKeyStarlarkValue(t *testing.T) {
+	b := starbox.New("test")
+	b.AddKeyStarlarkValue("a", starlark.MakeInt(11))
+	b.AddKeyStarlarkValue("b", starlark.MakeInt(22))
+	out, err := b.Run(HereDoc(`c = a + b`))
+	if err != nil {
+		t.Error(err)
+	}
+	if out == nil {
+		t.Error("expect not nil, got nil")
+	}
+	if len(out) != 1 {
+		t.Errorf("expect 1, got %d", len(out))
+	}
+	if es := int64(33); out["c"] != es {
+		t.Errorf("expect %d, got %v", es, out["c"])
+	}
+}
+
 // TestAddKeyValues tests the following:
 // 1. Create a new Starbox instance.
 // 2. Add key-value pairs.
@@ -526,6 +550,146 @@ func TestAddModuleData(t *testing.T) {
 		{`c = data.a + data.b`, 30},
 		{`load("data", "a", "b"); c = a * b`, 200},
 		{`load("data", "a", "b"); c = data.c * (a+b)`, 9000},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
+			}
+		})
+	}
+}
+
+// TestAddModuleFunctions tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add module functions.
+// 3. Run a script that uses function from the module functions.
+// 4. Check the output to see if the module functions work.
+func TestAddModuleFunctions(t *testing.T) {
+	b := starbox.New("test")
+	b.AddModuleFunctions("data", starbox.FuncMap{
+		"shift": func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			var a, b int64
+			if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+				return nil, err
+			}
+			return starlark.MakeInt64(a << b).Add(starlark.MakeInt(7)), nil
+		},
+	})
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`c = data.shift(a=10, b=4) + 100`, 267},
+		{`load("data", "shift"); c = shift(a=10, b=5) * 10`, 3270},
+		{`c = int(str(data.shift) == '<built-in function data.shift>')`, 1},
+		{`load("data", "shift"); c = int(str(shift) == '<built-in function data.shift>')`, 1},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
+			}
+		})
+	}
+}
+
+// TestAddStructData tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add struct data.
+// 3. Run a script that uses function from the struct data.
+// 4. Check the output to see if the struct data works.
+func TestAddStructData(t *testing.T) {
+	type dataStruct struct {
+		A int64
+		B int64
+		C int64
+	}
+	b := starbox.New("test")
+	b.AddStructData("data", starlark.StringDict{
+		"A": starlark.MakeInt(10),
+		"B": starlark.MakeInt(20),
+		"C": starlark.MakeInt(300),
+	})
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`c = data.A + data.B`, 30},
+		{`c = data.A * data.B`, 200},
+		{`c = data.C * (data.A + data.B)`, 9000},
+		{`load("data", 'A', 'B'); c = A * B`, 200},
+		{`load("data", 'A', 'B', 'C'); c = C * (A + B)`, 9000},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			b.Reset()
+			out, err := b.Run(HereDoc(tt.script))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if out == nil {
+				t.Error("expect not nil, got nil")
+			}
+			if len(out) != 1 {
+				t.Errorf("expect 1, got %d", len(out))
+			}
+			if es := tt.want; out["c"] != es {
+				t.Errorf("expect %d, got %v", es, out["c"])
+			}
+		})
+	}
+}
+
+// TestAddStructFunctions tests the following:
+// 1. Create a new Starbox instance.
+// 2. Add struct functions.
+// 3. Run a script that uses function from the struct functions.
+// 4. Check the output to see if the struct functions work.
+func TestAddStructFunctions(t *testing.T) {
+	b := starbox.New("test")
+	b.AddStructFunctions("data", starbox.FuncMap{
+		"shift": func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			var a, b int64
+			if err := starlark.UnpackArgs(bt.Name(), args, kwargs, "a", &a, "b", &b); err != nil {
+				return nil, err
+			}
+			return starlark.MakeInt64(a << b).Add(starlark.MakeInt(7)), nil
+		},
+	})
+	tests := []struct {
+		script string
+		want   int64
+	}{
+		{`c = data.shift(a=10, b=4) + 100`, 267},
+		{`load("data", "shift"); c = shift(a=10, b=5) * 10`, 3270},
+		{`c = int(str(data.shift) == '<built-in function data.shift>')`, 1},
+		{`load("data", "shift"); c = int(str(shift) == '<built-in function data.shift>')`, 1},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {

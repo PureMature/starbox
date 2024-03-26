@@ -1,6 +1,7 @@
 package starbox_test
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -252,6 +253,12 @@ func TestSetAddRunPanic(t *testing.T) {
 			},
 		},
 		{
+			name: "add key starlark value",
+			fn: func(b *starbox.Starbox) {
+				b.AddKeyStarlarkValue("a", starlark.MakeInt(100))
+			},
+		},
+		{
 			name: "add key values",
 			fn: func(b *starbox.Starbox) {
 				b.AddKeyValues(starlet.StringAnyMap{
@@ -311,6 +318,36 @@ func TestSetAddRunPanic(t *testing.T) {
 			},
 		},
 		{
+			name: "add module functions",
+			fn: func(b *starbox.Starbox) {
+				b.AddModuleFunctions("func", starbox.FuncMap{
+					"noop": func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+						return starlark.None, nil
+					},
+				})
+			},
+		},
+		{
+			name: "add struct data",
+			fn: func(b *starbox.Starbox) {
+				b.AddStructData("data", starlark.StringDict{
+					"A": starlark.MakeInt(10),
+					"B": starlark.MakeInt(20),
+					"C": starlark.MakeInt(300),
+				})
+			},
+		},
+		{
+			name: "add struct functions",
+			fn: func(b *starbox.Starbox) {
+				b.AddStructFunctions("func", starbox.FuncMap{
+					"noop": func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+						return starlark.None, nil
+					},
+				})
+			},
+		},
+		{
 			name: "add module script",
 			fn: func(b *starbox.Starbox) {
 				b.AddModuleScript("data", HereDoc(`
@@ -329,6 +366,12 @@ func TestSetAddRunPanic(t *testing.T) {
 					a = encode("hello world")
 					print(a, base64.encode("Aloha!"))
 				`))
+			},
+		},
+		{
+			name: "add http context",
+			fn: func(b *starbox.Starbox) {
+				b.AddHTTPContext(nil)
 			},
 		},
 		{
@@ -506,7 +549,7 @@ func TestOverrideKeyValue(t *testing.T) {
 	b := starbox.New("test")
 	b.AddKeyValue("a", 1)
 	b.AddKeyValue("a", 20)
-	b.AddKeyValue("a", 300)
+	b.AddKeyStarlarkValue("a", starlark.MakeInt(300))
 	out, err := b.Run(`res = a`)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -748,6 +791,37 @@ func TestModuleLoaderOnce(t *testing.T) {
 	}
 	if loadCnt != 2 {
 		t.Errorf("unexpected load count: %d", loadCnt)
+	}
+}
+
+func TestAddHTTPContext_Nil(t *testing.T) {
+	b := starbox.New("test")
+	b.AddHTTPContext(nil)
+	out, err := b.Run(`res = request; resp = type(response)`)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["res"] != nil {
+		t.Errorf("unexpected output: %v", out)
+	}
+	if out["resp"] != "struct" {
+		t.Errorf("unexpected output: %v", out)
+	}
+}
+
+func TestAddHTTPContext(t *testing.T) {
+	b := starbox.New("test")
+	req, _ := http.NewRequest("GET", "https://localhost", nil)
+	b.AddHTTPContext(req)
+	out, err := b.Run(`res = request.body; resp = type(response)`)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["res"] != nil {
+		t.Errorf("unexpected output: %v", out)
+	}
+	if out["resp"] != "struct" {
+		t.Errorf("unexpected output: %v", out)
 	}
 }
 
