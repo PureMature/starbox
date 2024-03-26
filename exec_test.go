@@ -317,6 +317,36 @@ func TestSetAddRunPanic(t *testing.T) {
 			},
 		},
 		{
+			name: "add module functions",
+			fn: func(b *starbox.Starbox) {
+				b.AddModuleFunctions("func", starbox.FuncMap{
+					"noop": func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+						return starlark.None, nil
+					},
+				})
+			},
+		},
+		{
+			name: "add struct data",
+			fn: func(b *starbox.Starbox) {
+				b.AddStructData("data", starlark.StringDict{
+					"A": starlark.MakeInt(10),
+					"B": starlark.MakeInt(20),
+					"C": starlark.MakeInt(300),
+				})
+			},
+		},
+		{
+			name: "add struct functions",
+			fn: func(b *starbox.Starbox) {
+				b.AddStructFunctions("func", starbox.FuncMap{
+					"noop": func(thread *starlark.Thread, bt *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+						return starlark.None, nil
+					},
+				})
+			},
+		},
+		{
 			name: "add module script",
 			fn: func(b *starbox.Starbox) {
 				b.AddModuleScript("data", HereDoc(`
