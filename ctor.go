@@ -67,63 +67,63 @@ func (s *Starbox) GetMachine() *starlet.Machine {
 }
 
 // SetStructTag sets the custom tag of Go struct fields for Starlark.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) SetStructTag(tag string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot set tag after running")
+		log.DPanic("cannot set tag after execution")
 	}
 	s.structTag = tag
 }
 
 // SetPrintFunc sets the print function for Starlark.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) SetPrintFunc(printFunc starlet.PrintFunc) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot set print function after running")
+		log.DPanic("cannot set print function after execution")
 	}
 	s.printFunc = printFunc
 }
 
 // SetFS sets the virtual filesystem for module scripts.
 // If it's not nil, it'll override all the scripts added by AddModuleScript().
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) SetFS(hfs fs.FS) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot set filesystem after running")
+		log.DPanic("cannot set filesystem after execution")
 	}
 	s.modFS = hfs
 }
 
-// SetModuleSet sets the module set to be loaded before running.
-// It panics if called after running.
+// SetModuleSet sets the module set to be loaded before execution.
+// It panics if called after execution.
 func (s *Starbox) SetModuleSet(modSet ModuleSetName) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot set module set after running")
+		log.DPanic("cannot set module set after execution")
 	}
 	s.modSet = modSet
 }
 
-// AddKeyValue adds a key-value pair to the global environment before running.
+// AddKeyValue adds a key-value pair to the global environment before execution.
 // If the key already exists, it will be overwritten.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddKeyValue(key string, value interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add key-value pair after running")
+		log.DPanic("cannot add key-value pair after execution")
 	}
 	if s.globals == nil {
 		s.globals = make(starlet.StringAnyMap)
@@ -131,15 +131,15 @@ func (s *Starbox) AddKeyValue(key string, value interface{}) {
 	s.globals[key] = value
 }
 
-// AddKeyStarlarkValue adds a key-value pair to the global environment before running, the value is a Starlark value.
+// AddKeyStarlarkValue adds a key-value pair to the global environment before execution, the value is a Starlark value.
 // If the key already exists, it will be overwritten.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddKeyStarlarkValue(key string, value starlark.Value) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add key-value pair after running")
+		log.DPanic("cannot add key-value pair after execution")
 	}
 	if s.globals == nil {
 		s.globals = make(starlet.StringAnyMap)
@@ -147,15 +147,15 @@ func (s *Starbox) AddKeyStarlarkValue(key string, value starlark.Value) {
 	s.globals[key] = value
 }
 
-// AddKeyValues adds key-value pairs to the global environment before running. Usually for output of Run()*.
+// AddKeyValues adds key-value pairs to the global environment before execution. Usually for output of Run()*.
 // For each key-value pair, if the key already exists, it will be overwritten.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddKeyValues(keyValues starlet.StringAnyMap) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add key-value pairs after running")
+		log.DPanic("cannot add key-value pairs after execution")
 	}
 	if s.globals == nil {
 		s.globals = make(starlet.StringAnyMap)
@@ -163,15 +163,15 @@ func (s *Starbox) AddKeyValues(keyValues starlet.StringAnyMap) {
 	s.globals.Merge(keyValues)
 }
 
-// AddStarlarkValues adds key-value pairs to the global environment before running, the values are already converted to Starlark values.
+// AddStarlarkValues adds key-value pairs to the global environment before execution, the values are already converted to Starlark values.
 // For each key-value pair, if the key already exists, it will be overwritten.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddStarlarkValues(keyValues starlark.StringDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add key-value pairs after running")
+		log.DPanic("cannot add key-value pairs after execution")
 	}
 	if s.globals == nil {
 		s.globals = make(starlet.StringAnyMap)
@@ -181,15 +181,15 @@ func (s *Starbox) AddStarlarkValues(keyValues starlark.StringDict) {
 	}
 }
 
-// AddBuiltin adds a builtin function with name to the global environment before running.
+// AddBuiltin adds a builtin function with name to the global environment before execution.
 // If the name already exists, it will be overwritten.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddBuiltin(name string, starFunc StarlarkFunc) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add builtin after running")
+		log.DPanic("cannot add builtin after execution")
 	}
 	if s.globals == nil {
 		s.globals = make(starlet.StringAnyMap)
@@ -200,26 +200,26 @@ func (s *Starbox) AddBuiltin(name string, starFunc StarlarkFunc) {
 
 // AddNamedModules adds builtin modules by name to the preload and lazyload registry.
 // It will not load the modules until the first run.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddNamedModules(moduleNames ...string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add named modules after running")
+		log.DPanic("cannot add named modules after execution")
 	}
 	s.builtMods = append(s.builtMods, moduleNames...)
 }
 
 // AddModuleLoader adds a custom module loader to the preload and lazyload registry.
 // It will not load the module until the first run, and load result can be accessed in script via load("module_name", "key1") or key1 directly.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.ModuleLoader) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add module loader after running")
+		log.DPanic("cannot add module loader after execution")
 	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
@@ -230,13 +230,13 @@ func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.Module
 // AddModuleFunctions adds a module with the given module functions along with a module loader, and adds it to the preload and lazyload registry.
 // The given module function can be accessed in script via load("module_name", "func1") or module_name.func1.
 // It works like AddModuleData() but allows only functions as values.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddModuleFunctions(name string, funcs FuncMap) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add module function after running")
+		log.DPanic("cannot add module function after execution")
 	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
@@ -250,13 +250,13 @@ func (s *Starbox) AddModuleFunctions(name string, funcs FuncMap) {
 
 // AddModuleData creates a module for the given module data along with a module loader, and adds it to the preload and lazyload registry.
 // The given module data can be accessed in script via load("module_name", "key1") or module_name.key1.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add module data after running")
+		log.DPanic("cannot add module data after execution")
 	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
@@ -267,13 +267,13 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 // AddStructFunctions adds a module with the given struct functions along with a module loader, and adds it to the preload and lazyload registry.
 // The given struct function can be accessed in script via load("struct_name", "func1") or struct_name.func1.
 // It works like AddStructData() but allows only functions as values.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddStructFunctions(name string, funcs FuncMap) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add struct function after running")
+		log.DPanic("cannot add struct function after execution")
 	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
@@ -287,13 +287,13 @@ func (s *Starbox) AddStructFunctions(name string, funcs FuncMap) {
 
 // AddStructData creates a module for the given struct data along with a module loader, and adds it to the preload and lazyload registry.
 // The given struct data can be accessed in script via load("struct_name", "key1") or struct_name.key1.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddStructData(structName string, structData starlark.StringDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add struct data after running")
+		log.DPanic("cannot add struct data after execution")
 	}
 	if s.loadMods == nil {
 		s.loadMods = make(map[string]starlet.ModuleLoader)
@@ -303,13 +303,13 @@ func (s *Starbox) AddStructData(structName string, structData starlark.StringDic
 
 // AddModuleScript creates a module with given module script in virtual filesystem, and adds it to the preload and lazyload registry.
 // The given module script can be accessed in script via load("module_name", "key1") or load("module_name.star", "key1") if module name has no ".star" suffix.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add module script after running")
+		log.DPanic("cannot add module script after execution")
 	}
 	if s.scriptMods == nil {
 		s.scriptMods = make(map[string]string)
@@ -321,15 +321,15 @@ func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	s.scriptMods[name] = moduleScript
 }
 
-// AddHTTPContext adds HTTP request and response data wrapper to the global environment before running.
+// AddHTTPContext adds HTTP request and response data wrapper to the global environment before execution.
 // It takes an HTTP request and returns the response data wrapper for setting response headers and body.
-// It panics if called after running.
+// It panics if called after execution.
 func (s *Starbox) AddHTTPContext(req *http.Request) *libhttp.ServerResponse {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add HTTP context after running")
+		log.DPanic("cannot add HTTP context after execution")
 	}
 	if s.globals == nil {
 		s.globals = make(starlet.StringAnyMap)
@@ -351,13 +351,13 @@ func NewMemory() *dataconv.SharedDict {
 	return dataconv.NewNamedSharedDict(memoryTypeName)
 }
 
-// AttachMemory adds a shared dictionary to the global environment before running.
+// AttachMemory adds a shared dictionary to the global environment before execution.
 func (s *Starbox) AttachMemory(name string, memory *dataconv.SharedDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add memory after running")
+		log.DPanic("cannot add memory after execution")
 	}
 	if s.globals == nil {
 		s.globals = make(starlet.StringAnyMap)
@@ -365,13 +365,13 @@ func (s *Starbox) AttachMemory(name string, memory *dataconv.SharedDict) {
 	s.globals[name] = memory
 }
 
-// CreateMemory creates a new shared dictionary for la mémoire collective with the given name, and adds it to the global environment before running.
+// CreateMemory creates a new shared dictionary for la mémoire collective with the given name, and adds it to the global environment before execution.
 func (s *Starbox) CreateMemory(name string) *dataconv.SharedDict {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.hasRun {
-		log.DPanic("cannot add memory after running")
+		log.DPanic("cannot add memory after execution")
 	}
 	if s.globals == nil {
 		s.globals = make(starlet.StringAnyMap)
