@@ -25,8 +25,8 @@ type FuncMap map[string]StarlarkFunc
 type Starbox struct {
 	mac        *starlet.Machine
 	mu         sync.RWMutex
-	hasRun     bool
-	runTimes   uint
+	hasExec    bool
+	execTimes  uint
 	name       string
 	structTag  string
 	printFunc  starlet.PrintFunc
@@ -58,7 +58,7 @@ func newStarMachine(name string) *starlet.Machine {
 
 // String returns the name of the Starbox instance.
 func (s *Starbox) String() string {
-	return fmt.Sprintf("🥡Box{name:%s,run:%d}", s.name, s.runTimes)
+	return fmt.Sprintf("🥡Box{name:%s,run:%d}", s.name, s.execTimes)
 }
 
 // GetMachine returns the underlying starlet.Machine instance.
@@ -72,7 +72,7 @@ func (s *Starbox) SetStructTag(tag string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot set tag after execution")
 	}
 	s.structTag = tag
@@ -84,7 +84,7 @@ func (s *Starbox) SetPrintFunc(printFunc starlet.PrintFunc) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot set print function after execution")
 	}
 	s.printFunc = printFunc
@@ -97,7 +97,7 @@ func (s *Starbox) SetFS(hfs fs.FS) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot set filesystem after execution")
 	}
 	s.modFS = hfs
@@ -109,7 +109,7 @@ func (s *Starbox) SetModuleSet(modSet ModuleSetName) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot set module set after execution")
 	}
 	s.modSet = modSet
@@ -122,7 +122,7 @@ func (s *Starbox) AddKeyValue(key string, value interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add key-value pair after execution")
 	}
 	if s.globals == nil {
@@ -138,7 +138,7 @@ func (s *Starbox) AddKeyStarlarkValue(key string, value starlark.Value) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add key-value pair after execution")
 	}
 	if s.globals == nil {
@@ -154,7 +154,7 @@ func (s *Starbox) AddKeyValues(keyValues starlet.StringAnyMap) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add key-value pairs after execution")
 	}
 	if s.globals == nil {
@@ -170,7 +170,7 @@ func (s *Starbox) AddStarlarkValues(keyValues starlark.StringDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add key-value pairs after execution")
 	}
 	if s.globals == nil {
@@ -188,7 +188,7 @@ func (s *Starbox) AddBuiltin(name string, starFunc StarlarkFunc) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add builtin after execution")
 	}
 	if s.globals == nil {
@@ -205,7 +205,7 @@ func (s *Starbox) AddNamedModules(moduleNames ...string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add named modules after execution")
 	}
 	s.builtMods = append(s.builtMods, moduleNames...)
@@ -218,7 +218,7 @@ func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.Module
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add module loader after execution")
 	}
 	if s.loadMods == nil {
@@ -235,7 +235,7 @@ func (s *Starbox) AddModuleFunctions(name string, funcs FuncMap) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add module function after execution")
 	}
 	if s.loadMods == nil {
@@ -255,7 +255,7 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add module data after execution")
 	}
 	if s.loadMods == nil {
@@ -272,7 +272,7 @@ func (s *Starbox) AddStructFunctions(name string, funcs FuncMap) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add struct function after execution")
 	}
 	if s.loadMods == nil {
@@ -292,7 +292,7 @@ func (s *Starbox) AddStructData(structName string, structData starlark.StringDic
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add struct data after execution")
 	}
 	if s.loadMods == nil {
@@ -308,7 +308,7 @@ func (s *Starbox) AddModuleScript(moduleName, moduleScript string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add module script after execution")
 	}
 	if s.scriptMods == nil {
@@ -328,7 +328,7 @@ func (s *Starbox) AddHTTPContext(req *http.Request) *libhttp.ServerResponse {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add HTTP context after execution")
 	}
 	if s.globals == nil {
@@ -356,7 +356,7 @@ func (s *Starbox) AttachMemory(name string, memory *dataconv.SharedDict) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add memory after execution")
 	}
 	if s.globals == nil {
@@ -370,7 +370,7 @@ func (s *Starbox) CreateMemory(name string) *dataconv.SharedDict {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.hasRun {
+	if s.hasExec {
 		log.DPanic("cannot add memory after execution")
 	}
 	if s.globals == nil {
