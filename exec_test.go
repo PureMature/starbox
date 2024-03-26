@@ -369,6 +369,12 @@ func TestSetAddRunPanic(t *testing.T) {
 			},
 		},
 		{
+			name: "add http context",
+			fn: func(b *starbox.Starbox) {
+				b.AddHTTPContext(nil)
+			},
+		},
+		{
 			name: "create memory",
 			fn: func(b *starbox.Starbox) {
 				b.CreateMemory("test1")
