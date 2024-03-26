@@ -1,6 +1,7 @@
 package starbox_test
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -784,6 +785,37 @@ func TestModuleLoaderOnce(t *testing.T) {
 	}
 	if loadCnt != 2 {
 		t.Errorf("unexpected load count: %d", loadCnt)
+	}
+}
+
+func TestAddHTTPContext_Nil(t *testing.T) {
+	b := starbox.New("test")
+	b.AddHTTPContext(nil)
+	out, err := b.Run(`res = request; resp = type(response)`)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["res"] != nil {
+		t.Errorf("unexpected output: %v", out)
+	}
+	if out["resp"] != "struct" {
+		t.Errorf("unexpected output: %v", out)
+	}
+}
+
+func TestAddHTTPContext(t *testing.T) {
+	b := starbox.New("test")
+	req, _ := http.NewRequest("GET", "http://localhost", nil)
+	b.AddHTTPContext(req)
+	out, err := b.Run(`res = request.body; resp = type(response)`)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if out["res"] != nil {
+		t.Errorf("unexpected output: %v", out)
+	}
+	if out["resp"] != "struct" {
+		t.Errorf("unexpected output: %v", out)
 	}
 }
 

@@ -335,8 +335,14 @@ func (s *Starbox) AddHTTPContext(req *http.Request) *libhttp.ServerResponse {
 		s.globals = make(starlet.StringAnyMap)
 	}
 
-	// add request and response to globals
-	s.globals["request"] = libhttp.ConvertServerRequest(req)
+	// add request to globals
+	if sr := libhttp.ConvertServerRequest(req); sr != nil {
+		s.globals["request"] = sr
+	} else {
+		s.globals["request"] = starlark.None
+	}
+
+	// add response to globals
 	resp := libhttp.NewServerResponse()
 	s.globals["response"] = resp.Struct()
 	return resp
