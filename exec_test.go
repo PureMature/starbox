@@ -811,7 +811,7 @@ func TestAddHTTPContext_Nil(t *testing.T) {
 
 func TestAddHTTPContext(t *testing.T) {
 	b := starbox.New("test")
-	req, _ := http.NewRequest("GET", "http://localhost", nil)
+	req, _ := http.NewRequest("GET", "https://localhost", nil)
 	b.AddHTTPContext(req)
 	out, err := b.Run(`res = request.body; resp = type(response)`)
 	if err != nil {
