@@ -18,6 +18,9 @@ import (
 // StarlarkFunc is a function that can be called from Starlark.
 type StarlarkFunc func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error)
 
+// FuncMap is a map of Starlark functions.
+type FuncMap map[string]StarlarkFunc
+
 // Starbox is a wrapper of starlet.Machine with additional features.
 type Starbox struct {
 	mac        *starlet.Machine
@@ -228,7 +231,7 @@ func (s *Starbox) AddModuleLoader(moduleName string, moduleLoader starlet.Module
 // The given module function can be accessed in script via load("module_name", "func1") or module_name.func1.
 // It works like AddModuleData() but allows only functions as values.
 // It panics if called after running.
-func (s *Starbox) AddModuleFunctions(name string, funcs map[string]StarlarkFunc) {
+func (s *Starbox) AddModuleFunctions(name string, funcs FuncMap) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -265,7 +268,7 @@ func (s *Starbox) AddModuleData(moduleName string, moduleData starlark.StringDic
 // The given struct function can be accessed in script via load("struct_name", "func1") or struct_name.func1.
 // It works like AddStructData() but allows only functions as values.
 // It panics if called after running.
-func (s *Starbox) AddStructFunctions(name string, funcs map[string]StarlarkFunc) {
+func (s *Starbox) AddStructFunctions(name string, funcs FuncMap) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
